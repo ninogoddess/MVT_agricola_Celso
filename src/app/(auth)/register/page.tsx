@@ -11,6 +11,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -35,12 +36,37 @@ export default function RegisterPage() {
         return;
       }
 
-      router.push("/login");
+      // Mostrar mensaje de confirmación en vez de redirigir al login
+      setSuccess(true);
     } catch {
       setError("Error de conexión");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (success) {
+    return (
+      <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-b from-green-50 to-white">
+        <div className="max-w-sm w-full text-center space-y-4 bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
+          <div className="text-5xl">📧</div>
+          <h2 className="text-xl font-bold text-gray-800">Revisa tu correo</h2>
+          <p className="text-gray-600 text-sm">
+            Hemos enviado un enlace de confirmación a <strong>{email}</strong>.
+            Revisa tu bandeja de entrada (y la carpeta de spam) y haz click en el enlace para activar tu cuenta.
+          </p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
+            ⚠️ No podrás iniciar sesión hasta confirmar tu email.
+          </div>
+          <Link
+            href="/login"
+            className="block w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px]"
+          >
+            Ir a Iniciar Sesión
+          </Link>
+        </div>
+      </main>
+    );
   }
 
   return (

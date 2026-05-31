@@ -4,6 +4,14 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
+  // Manejar callback de confirmación de email (?code=xxx)
+  const code = request.nextUrl.searchParams.get('code');
+  if (code && request.nextUrl.pathname === '/') {
+    const confirmUrl = new URL('/auth/confirm', request.url);
+    confirmUrl.searchParams.set('code', code);
+    return NextResponse.redirect(confirmUrl);
+  }
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
