@@ -1,39 +1,23 @@
--- Tabla de Recomendaciones Agronómicas
-CREATE TABLE recommendations (
+-- Tabla de Parámetros de Cultivos (datos públicos compartidos, NO multi-tenant)
+CREATE TABLE crop_parameters (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id),
-  parcela_id UUID NOT NULL REFERENCES parcelas(id),
-  cultivo_id UUID REFERENCES cultivos(id),
-  recommendation_type VARCHAR(50) NOT NULL,
-  payload JSONB NOT NULL,
-  climate_data_fetched_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  is_stale BOOLEAN NOT NULL DEFAULT FALSE,
-  generated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
-
-CREATE INDEX idx_recommendations_tenant ON recommendations(tenant_id);
-CREATE INDEX idx_recommendations_parcela ON recommendations(parcela_id, generated_at DESC);
-CREATE INDEX idx_recommendations_cultivo ON recommendations(cultivo_id, recommendation_type);
-
--- Tabla de Recordatorios de Tareas Agrícolas
-CREATE TABLE reminders (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL REFERENCES tenants(id),
-  parcela_id UUID NOT NULL REFERENCES parcelas(id),
-  cultivo_id UUID REFERENCES cultivos(id),
-  task_type VARCHAR(50) NOT NULL CHECK (task_type IN ('riego','poda','fertilizacion')),
-  scheduled_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  status VARCHAR(50) NOT NULL DEFAULT 'pending'
-    CHECK (status IN ('pending','upcoming','completed')),
-  source VARCHAR(50) NOT NULL DEFAULT 'auto'
-    CHECK (source IN ('auto','manual')),
-  reasoning TEXT,
-  completed_at TIMESTAMP WITH TIME ZONE,
+  species VARCHAR(255) NOT NULL,
+  variety VARCHAR(255),
+  temp_min_germinacion DECIMAL(5, 2) NOT NULL,
+  temp_max_germinacion DECIMAL(5, 2) NOT NULL,
+  temp_optima_min DECIMAL(5, 2),
+  temp_optima_max DECIMAL(5, 2),
+  dias_a_cosecha INTEGER NOT NULL,
+  hemisferio_sur_meses_siembra INTEGER[] NOT NULL,
+  hemisferio_norte_meses_siembra INTEGER[] NOT NULL,
+  ventana_poda_meses INTEGER[],
+  calendario_fertilizacion JSONB,
+  humedad_suelo_optima_min DECIMAL(5, 2),
+  humedad_suelo_optima_max DECIMAL(5, 2),
+  notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(species, variety)
 );
 
-CREATE INDEX idx_reminders_tenant_status ON reminders(tenant_id, status, scheduled_at);
-CREATE INDEX idx_reminders_parcela ON reminders(parcela_id, scheduled_at);
-CREATE INDEX idx_reminders_cultivo ON reminders(cultivo_id);
+CREATE INDEX idx_crop_parameters_species ON crop_parameters(species);
