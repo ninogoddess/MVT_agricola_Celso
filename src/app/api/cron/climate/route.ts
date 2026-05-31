@@ -2,11 +2,15 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { updateClimateForAllParcelas } from '@/lib/services/climate.service';
 
 export async function GET(request: NextRequest) {
-  // Validar CRON_SECRET
+  // Validar CRON_SECRET via header o query param
   const authHeader = request.headers.get('authorization');
-  const expectedToken = `Bearer ${process.env.CRON_SECRET}`;
+  const { searchParams } = new URL(request.url);
+  const querySecret = searchParams.get('secret');
+  const expectedSecret = process.env.CRON_SECRET;
 
-  if (authHeader !== expectedToken) {
+  const providedSecret = authHeader?.replace('Bearer ', '') || querySecret;
+
+  if (!expectedSecret || providedSecret !== expectedSecret) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
