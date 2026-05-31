@@ -11,6 +11,27 @@ export default function NewParcelaPage() {
   const [areaHectares, setAreaHectares] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [geoLoading, setGeoLoading] = useState(false);
+
+  function useMyLocation() {
+    if (!navigator.geolocation) {
+      setError("Tu navegador no soporta geolocalización");
+      return;
+    }
+    setGeoLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(position.coords.latitude.toFixed(7));
+        setLongitude(position.coords.longitude.toFixed(7));
+        setGeoLoading(false);
+      },
+      (err) => {
+        setError("No se pudo obtener la ubicación: " + err.message);
+        setGeoLoading(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -66,19 +87,32 @@ export default function NewParcelaPage() {
             placeholder="Ej: Parcela Norte" />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label htmlFor="lat" className="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
-            <input id="lat" type="number" step="any" value={latitude} onChange={(e) => setLatitude(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              placeholder="-33.45" />
+        {/* Ubicación */}
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className="block text-sm font-medium text-gray-700">Ubicación</label>
+            <button
+              type="button"
+              onClick={useMyLocation}
+              disabled={geoLoading}
+              className="text-sm text-green-600 font-medium hover:text-green-700 disabled:opacity-50 flex items-center gap-1 min-h-[44px] px-2"
+            >
+              📍 {geoLoading ? "Obteniendo..." : "Usar mi ubicación"}
+            </button>
           </div>
-          <div>
-            <label htmlFor="lng" className="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
-            <input id="lng" type="number" step="any" value={longitude} onChange={(e) => setLongitude(e.target.value)} required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              placeholder="-70.66" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <input id="lat" type="number" step="any" value={latitude} onChange={(e) => setLatitude(e.target.value)} required
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                placeholder="Latitud (-33.45)" />
+            </div>
+            <div>
+              <input id="lng" type="number" step="any" value={longitude} onChange={(e) => setLongitude(e.target.value)} required
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+                placeholder="Longitud (-70.66)" />
+            </div>
           </div>
+          <p className="text-xs text-gray-400 mt-1">Usa el botón para detectar automáticamente o ingresa las coordenadas manualmente.</p>
         </div>
 
         <div>

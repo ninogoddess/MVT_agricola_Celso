@@ -40,6 +40,26 @@ export default function ParcelaDetailPage() {
         </Link>
       </div>
 
+      {/* Acciones rápidas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Link href={`/cultivos/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+          <span className="text-xl">🌿</span>
+          <span className="text-xs text-gray-600">Cultivos</span>
+        </Link>
+        <Link href={`/suelo/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+          <span className="text-xl">🧪</span>
+          <span className="text-xs text-gray-600">Suelo</span>
+        </Link>
+        <Link href={`/recomendaciones/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+          <span className="text-xl">💡</span>
+          <span className="text-xs text-gray-600">Recomendaciones</span>
+        </Link>
+        <Link href="/recordatorios" className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+          <span className="text-xl">📋</span>
+          <span className="text-xs text-gray-600">Recordatorios</span>
+        </Link>
+      </div>
+
       {/* Info parcela */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="grid grid-cols-2 gap-4 text-sm">
@@ -80,12 +100,17 @@ export default function ParcelaDetailPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-gray-800">🌿 Cultivos</h2>
-          <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline">
-            Ver todos →
+          <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline min-h-[44px] flex items-center">
+            Gestionar →
           </Link>
         </div>
         {cultivos.length === 0 ? (
-          <p className="text-gray-500 text-sm">Sin cultivos registrados</p>
+          <div className="text-center py-4">
+            <p className="text-gray-500 text-sm mb-2">Sin cultivos registrados</p>
+            <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline">
+              + Agregar primer cultivo
+            </Link>
+          </div>
         ) : (
           <ul className="space-y-2">
             {cultivos.slice(0, 5).map((c) => (
