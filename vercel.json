@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/cron/climate", "schedule": "0 * * * *" },
+    { "path": "/api/cron/recommendations", "schedule": "0 3 * * *" },
+    { "path": "/api/cron/reminders", "schedule": "0 * * * *" }
+  ]
+}
