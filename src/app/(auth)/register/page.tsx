@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { Mail, AlertTriangle } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [tenantName, setTenantName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,51 +17,36 @@ export default function RegisterPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tenantName, email, password }),
       });
-
       const data = await res.json();
-
       if (!res.ok) {
-        if (data.fields) {
-          setError(data.fields.map((f: { message: string }) => f.message).join(", "));
-        } else {
-          setError(data.error || "Error al crear cuenta");
-        }
+        setError(data.fields ? data.fields.map((f: { message: string }) => f.message).join(", ") : data.error || "Error al crear cuenta");
         return;
       }
-
-      // Mostrar mensaje de confirmación en vez de redirigir al login
       setSuccess(true);
-    } catch {
-      setError("Error de conexión");
-    } finally {
-      setLoading(false);
-    }
+    } catch { setError("Error de conexión"); }
+    finally { setLoading(false); }
   }
 
   if (success) {
     return (
       <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-b from-green-50 to-white">
-        <div className="max-w-sm w-full text-center space-y-4 bg-white p-8 rounded-lg border border-gray-200 shadow-sm">
-          <div className="text-5xl">📧</div>
-          <h2 className="text-xl font-bold text-gray-800">Revisa tu correo</h2>
-          <p className="text-gray-600 text-sm">
-            Hemos enviado un enlace de confirmación a <strong>{email}</strong>.
-            Revisa tu bandeja de entrada (y la carpeta de spam) y haz click en el enlace para activar tu cuenta.
-          </p>
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700">
-            ⚠️ No podrás iniciar sesión hasta confirmar tu email.
+        <div className="max-w-sm w-full text-center space-y-4 bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+            <Mail size={28} className="text-blue-600" />
           </div>
-          <Link
-            href="/login"
-            className="block w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px]"
-          >
+          <h2 className="text-xl font-bold text-gray-800">Revisa tu correo</h2>
+          <p className="text-gray-600 text-sm">Hemos enviado un enlace de confirmación a <strong>{email}</strong>. Haz click en él para activar tu cuenta.</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700 flex items-start gap-2">
+            <AlertTriangle size={16} className="flex-shrink-0 mt-0.5" />
+            No podrás iniciar sesión hasta confirmar tu email. Revisa también spam.
+          </div>
+          <Link href="/login" className="block w-full py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 min-h-[44px]">
             Ir a Iniciar Sesión
           </Link>
         </div>
@@ -73,78 +58,43 @@ export default function RegisterPage() {
     <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-b from-green-50 to-white">
       <div className="max-w-sm w-full space-y-6">
         <div className="text-center">
-          <div className="text-4xl mb-2">🌱</div>
+          <div className="relative w-16 h-16 mx-auto mb-3">
+            <Image src="/assets/logo_principal.png" alt="AgroInteligencia" fill className="object-contain"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+          </div>
           <h1 className="text-2xl font-bold text-green-800">Crear Cuenta</h1>
-          <p className="text-gray-500 text-sm mt-1">Registra tu organización agrícola</p>
+          <p className="text-gray-500 text-sm mt-1">Registra tu organización agrícola en AgroInteligencia</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              {error}
-            </div>
-          )}
-
+          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>}
           <div>
-            <label htmlFor="tenantName" className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre de tu campo / organización
-            </label>
-            <input
-              id="tenantName"
-              type="text"
-              value={tenantName}
-              onChange={(e) => setTenantName(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              placeholder="Ej: Fundo Los Aromos"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de tu campo / organización</label>
+            <input type="text" value={tenantName} onChange={(e) => setTenantName(e.target.value)} required
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="Ej: Fundo Los Aromos" />
           </div>
-
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              placeholder="tu@email.com"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="tu@email.com" />
           </div>
-
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña (mín. 6 caracteres)
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-              placeholder="••••••"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña (mín. 6 caracteres)</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+              placeholder="••••••" />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 min-h-[44px]"
-          >
+          <button type="submit" disabled={loading}
+            className="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 min-h-[44px]">
             {loading ? "Creando cuenta..." : "Crear Cuenta"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500">
           ¿Ya tienes cuenta?{" "}
-          <Link href="/login" className="text-green-600 font-medium hover:underline">
-            Inicia sesión
-          </Link>
+          <Link href="/login" className="text-green-600 font-medium hover:underline">Inicia sesión</Link>
         </p>
       </div>
     </main>

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { MapPin, Sprout, FlaskConical, Lightbulb, CalendarCheck, CloudSun } from "lucide-react";
 import { useReverseGeocode } from "@/hooks/useReverseGeocode";
 
 export default function ParcelaDetailPage() {
@@ -41,8 +42,9 @@ export default function ParcelaDetailPage() {
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">{parcela.name as string}</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
-            {geoLoading ? "Obteniendo ubicación..." : location ? `📍 ${location}` : `📍 ${lat?.toFixed(4)}, ${lon?.toFixed(4)}`}
+          <p className="text-sm text-gray-500 mt-0.5 flex items-center gap-1">
+            <MapPin size={13} className="text-gray-400" />
+            {geoLoading ? "Obteniendo ubicación..." : location ?? `${lat?.toFixed(4)}, ${lon?.toFixed(4)}`}
           </p>
         </div>
         <Link href={`/recomendaciones/${id}`} className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 min-h-[44px] flex items-center">
@@ -53,14 +55,14 @@ export default function ParcelaDetailPage() {
       {/* Acciones rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { href: `/cultivos/${id}`, label: "Cultivos", emoji: "🌿" },
-          { href: `/suelo/${id}`, label: "Suelo", emoji: "🧪" },
-          { href: `/recomendaciones/${id}`, label: "Recomendaciones", emoji: "💡" },
-          { href: "/recordatorios", label: "Recordatorios", emoji: "📋" },
+          { href: `/cultivos/${id}`, label: "Cultivos", icon: Sprout },
+          { href: `/suelo/${id}`, label: "Suelo", icon: FlaskConical },
+          { href: `/recomendaciones/${id}`, label: "Recomendaciones", icon: Lightbulb },
+          { href: "/recordatorios", label: "Recordatorios", icon: CalendarCheck },
         ].map((item) => (
           <Link key={item.href} href={item.href}
             className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
-            <span className="text-xl">{item.emoji}</span>
+            <item.icon size={20} className="text-green-600" />
             <span className="text-xs text-gray-600">{item.label}</span>
           </Link>
         ))}
@@ -70,10 +72,10 @@ export default function ParcelaDetailPage() {
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <h2 className="font-semibold text-gray-800 mb-3">Información</h2>
         <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="col-span-2">
-            <span className="text-gray-500">Ubicación: </span>
-            <span className="font-medium">{location ?? `${lat?.toFixed(5)}, ${lon?.toFixed(5)}`}</span>
-          </div>
+              <div className="flex items-center gap-2">
+                <MapPin size={13} className="text-gray-400 flex-shrink-0" />
+                <span className="text-sm font-medium">{location ?? `${lat?.toFixed(5)}, ${lon?.toFixed(5)}`}</span>
+              </div>
           <div><span className="text-gray-500">Coordenadas: </span><span className="font-mono text-xs">{lat?.toFixed(5)}, {lon?.toFixed(5)}</span></div>
           <div><span className="text-gray-500">Superficie: </span><span className="font-medium">{parcela.area_hectares as string} ha</span></div>
         </div>
@@ -81,7 +83,9 @@ export default function ParcelaDetailPage() {
 
       {/* Clima actual */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <h2 className="font-semibold text-gray-800 mb-3">🌤️ Clima Actual</h2>
+        <h2 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+          <CloudSun size={18} className="text-blue-500" /> Clima Actual
+        </h2>
         {climateData ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
             <div className="bg-blue-50 rounded-lg p-3 text-center">
@@ -109,7 +113,9 @@ export default function ParcelaDetailPage() {
       {/* Cultivos */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-gray-800">🌿 Cultivos</h2>
+          <h2 className="font-semibold text-gray-800 flex items-center gap-2">
+            <Sprout size={16} className="text-green-600" /> Cultivos
+          </h2>
           <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline min-h-[44px] flex items-center">
             Gestionar →
           </Link>

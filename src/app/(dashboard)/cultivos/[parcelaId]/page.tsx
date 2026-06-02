@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Sprout, CheckCircle2, Lightbulb, CalendarDays } from "lucide-react";
 
 interface Cultivo {
   id: string;
@@ -142,20 +143,20 @@ export default function CultivosPage() {
             <button
               type="button"
               onClick={() => { setIsAlreadyPlanted(false); if (selectedSpecies) setPlantingDate(getSuggestedPlantingDate(selectedParams?.hemisferio_sur_meses_siembra ?? [])); }}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium border-2 transition-colors min-h-[44px] ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium border-2 transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
                 !isAlreadyPlanted ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 text-gray-500"
               }`}
             >
-              🌱 Planificar siembra
+              <Sprout size={15} /> Planificar siembra
             </button>
             <button
               type="button"
               onClick={() => { setIsAlreadyPlanted(true); setPlantingDate(""); }}
-              className={`flex-1 py-2.5 rounded-lg text-sm font-medium border-2 transition-colors min-h-[44px] ${
+              className={`flex-1 py-2.5 rounded-lg text-sm font-medium border-2 transition-colors min-h-[44px] flex items-center justify-center gap-2 ${
                 isAlreadyPlanted ? "border-green-500 bg-green-50 text-green-700" : "border-gray-200 text-gray-500"
               }`}
             >
-              ✅ Ya está cultivado
+              <CheckCircle2 size={15} /> Ya está cultivado
             </button>
           </div>
 
@@ -186,7 +187,9 @@ export default function CultivosPage() {
           {/* Sugerencia de fecha */}
           {!isAlreadyPlanted && selectedParams && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-sm">
-              <p className="text-green-700 font-medium mb-1">💡 Ventana óptima para Chile (hemisferio sur)</p>
+              <p className="text-green-700 font-medium mb-1 flex items-center gap-1.5">
+                <Lightbulb size={14} /> Ventana óptima para Chile (hemisferio sur)
+              </p>
               <p className="text-green-600">Meses recomendados: <strong>{getOptimalWindowText(selectedParams.hemisferio_sur_meses_siembra)}</strong></p>
               <p className="text-green-600">Días a cosecha: ~<strong>{selectedParams.dias_a_cosecha} días</strong></p>
             </div>
@@ -194,7 +197,10 @@ export default function CultivosPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              {isAlreadyPlanted ? "Fecha de siembra (real)" : "Fecha de siembra (planificada)"}
+              <span className="flex items-center gap-1.5">
+                <CalendarDays size={14} />
+                {isAlreadyPlanted ? "Fecha de siembra (real)" : "Fecha de siembra (planificada)"}
+              </span>
             </label>
             <input type="date" value={plantingDate} onChange={(e) => setPlantingDate(e.target.value)} required
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500" />

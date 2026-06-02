@@ -50,6 +50,7 @@ export class ParcelaService {
     if (input.latitude !== undefined) updateData.latitude = input.latitude;
     if (input.longitude !== undefined) updateData.longitude = input.longitude;
     if (input.areaHectares !== undefined) updateData.area_hectares = input.areaHectares;
+    if (input.color !== undefined) updateData.color = input.color;
 
     const { data, error } = await this.repo.update(id, updateData);
 

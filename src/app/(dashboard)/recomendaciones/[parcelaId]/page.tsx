@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Wheat, Sprout, Thermometer, Droplets, CloudRain, AlertTriangle, RefreshCw, CalendarRange } from "lucide-react";
 
 interface Recommendation {
   id: string;
@@ -38,47 +39,61 @@ export default function RecomendacionesPage() {
 
       {recommendations.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <div className="text-4xl mb-3">🌾</div>
-          <p className="text-gray-500">No hay recomendaciones disponibles</p>
+          <Wheat size={44} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-500 font-medium">Sin recomendaciones disponibles</p>
           <p className="text-sm text-gray-400 mt-1">Agrega cultivos para recibir recomendaciones de siembra y cosecha</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {recommendations.map((rec) => (
-            <div key={rec.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${
-                  rec.recommendation_type === "siembra" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-                }`}>
-                  {rec.recommendation_type === "siembra" ? "🌱 Siembra" : "🌾 Cosecha"}
-                </span>
-                {rec.is_stale && (
-                  <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">⚠️ Datos desactualizados</span>
-                )}
-              </div>
-
-              <div className="text-sm space-y-1">
-                <p><span className="text-gray-500">Ventana óptima:</span>{" "}
-                  <span className="font-medium">
-                    {new Date(rec.payload.windowStart).toLocaleDateString("es-CL")} — {new Date(rec.payload.windowEnd).toLocaleDateString("es-CL")}
+          {recommendations.map((rec) => {
+            const isSiembra = rec.recommendation_type === "siembra";
+            return (
+              <div key={rec.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
+                    isSiembra ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+                  }`}>
+                    {isSiembra ? <Sprout size={12} /> : <Wheat size={12} />}
+                    {isSiembra ? "Siembra" : "Cosecha"}
                   </span>
-                </p>
-                {rec.payload.estimatedHarvestDate && (
-                  <p><span className="text-gray-500">Cosecha estimada:</span>{" "}
-                    <span className="font-medium">{new Date(rec.payload.estimatedHarvestDate).toLocaleDateString("es-CL")}</span>
-                  </p>
-                )}
-              </div>
+                  {rec.is_stale && (
+                    <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <AlertTriangle size={11} /> Datos desactualizados
+                    </span>
+                  )}
+                </div>
 
-              <p className="text-xs text-gray-500 bg-gray-50 rounded p-2">{rec.payload.reasoning}</p>
+                <div className="text-sm space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <CalendarRange size={14} className="text-gray-400 flex-shrink-0" />
+                    <span className="text-gray-500">Ventana óptima:</span>
+                    <span className="font-medium">
+                      {new Date(rec.payload.windowStart).toLocaleDateString("es-CL")} — {new Date(rec.payload.windowEnd).toLocaleDateString("es-CL")}
+                    </span>
+                  </div>
+                  {rec.payload.estimatedHarvestDate && (
+                    <div className="flex items-center gap-2">
+                      <Wheat size={14} className="text-gray-400 flex-shrink-0" />
+                      <span className="text-gray-500">Cosecha estimada:</span>
+                      <span className="font-medium">{new Date(rec.payload.estimatedHarvestDate).toLocaleDateString("es-CL")}</span>
+                    </div>
+                  )}
+                </div>
 
-              <div className="flex gap-3 text-xs text-gray-400">
-                <span>🌡️ {rec.payload.climateSnapshot.temperature}°C</span>
-                <span>💧 {rec.payload.climateSnapshot.humidity}%</span>
-                <span>🌧️ {rec.payload.climateSnapshot.precipitationProb}%</span>
+                <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-2.5 leading-relaxed">{rec.payload.reasoning}</p>
+
+                <div className="flex gap-4 text-xs text-gray-400 pt-1">
+                  <span className="flex items-center gap-1"><Thermometer size={12} /> {rec.payload.climateSnapshot.temperature}°C</span>
+                  <span className="flex items-center gap-1"><Droplets size={12} /> {rec.payload.climateSnapshot.humidity}%</span>
+                  <span className="flex items-center gap-1"><CloudRain size={12} /> {rec.payload.climateSnapshot.precipitationProb}%</span>
+                </div>
+
+                <div className="text-xs text-gray-400 flex items-center gap-1">
+                  <RefreshCw size={11} /> Generada: {new Date(rec.generated_at).toLocaleDateString("es-CL")}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

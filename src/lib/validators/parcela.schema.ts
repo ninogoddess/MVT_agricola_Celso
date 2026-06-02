@@ -12,6 +12,7 @@ export const updateParcelaSchema = z.object({
   latitude: z.number().min(-90).max(90).optional(),
   longitude: z.number().min(-180).max(180).optional(),
   areaHectares: z.number().positive().optional(),
+  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Color debe ser un valor hexadecimal válido').optional(),
 });
 
 export type CreateParcelaInput = z.infer<typeof createParcelaSchema>;

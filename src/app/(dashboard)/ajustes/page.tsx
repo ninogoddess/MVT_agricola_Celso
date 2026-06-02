@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AlertTriangle, Trash2 } from "lucide-react";
 
 export default function AjustesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -35,7 +36,9 @@ export default function AjustesPage() {
 
       {/* Sección eliminar cuenta */}
       <div className="bg-white rounded-lg border border-red-200 p-5">
-        <h2 className="font-semibold text-red-700 mb-2">⚠️ Zona de Peligro</h2>
+        <h2 className="font-semibold text-red-700 mb-2 flex items-center gap-2">
+          <AlertTriangle size={16} /> Zona de Peligro
+        </h2>
         <p className="text-sm text-gray-600 mb-4">
           Eliminar tu cuenta borrará de forma permanente todos tus datos: parcelas, cultivos, registros de suelo,
           datos climáticos, alertas y recordatorios. Esta acción <strong>no se puede deshacer</strong>.
@@ -47,7 +50,8 @@ export default function AjustesPage() {
             onClick={() => setShowDeleteConfirm(true)}
             className="px-4 py-2.5 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 min-h-[44px]"
           >
-            Eliminar mi cuenta
+            <Trash2 size={18} />
+          Eliminar mi cuenta
           </button>
         ) : (
           <div className="space-y-3">

@@ -4,13 +4,16 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import {
+  LayoutDashboard, Map, Bell, CalendarCheck, Settings, LogOut, Menu, X
+} from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: "📊" },
-  { href: "/parcelas", label: "Parcelas", icon: "🗺️" },
-  { href: "/alertas", label: "Alertas", icon: "🔔" },
-  { href: "/recordatorios", label: "Recordatorios", icon: "📋" },
-  { href: "/ajustes", label: "Ajustes", icon: "⚙️" },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/parcelas", label: "Parcelas", icon: Map },
+  { href: "/alertas", label: "Alertas", icon: Bell },
+  { href: "/recordatorios", label: "Recordatorios", icon: CalendarCheck },
+  { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 
 function Logo({ size = 32 }: { size?: number }) {
@@ -18,13 +21,18 @@ function Logo({ size = 32 }: { size?: number }) {
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <Image
         src="/assets/logo_principal.png"
-        alt="AgroSmart"
+        alt="AgroInteligencia"
         fill
         className="object-contain"
         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
       />
     </div>
   );
+}
+
+async function logout() {
+  await fetch("/api/auth/logout", { method: "POST" });
+  window.location.href = "/";
 }
 
 export default function MobileNav() {
@@ -37,48 +45,33 @@ export default function MobileNav() {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Logo size={32} />
-          <span className="font-bold text-green-800">AgroSmart</span>
+          <span className="font-bold text-green-800">AgroInteligencia</span>
         </Link>
-        <button
-          onClick={() => setOpen(!open)}
+        <button onClick={() => setOpen(!open)}
           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100"
-          aria-label="Menú"
-        >
-          <span className="text-xl">{open ? "✕" : "☰"}</span>
+          aria-label="Menú">
+          {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </header>
 
-      {/* Overlay mobile menu */}
+      {/* Overlay mobile */}
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/20" />
-          <nav
-            className="absolute top-[57px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
+          <nav className="absolute top-[57px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg"
+            onClick={(e) => e.stopPropagation()}>
+            {navItems.map(({ href, label, icon: Icon }) => (
+              <Link key={href} href={href} onClick={() => setOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 min-h-[44px] border-b border-gray-100 ${
-                  pathname.startsWith(item.href)
-                    ? "bg-green-50 text-green-700 font-medium"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <span>{item.icon}</span>
-                <span>{item.label}</span>
+                  pathname.startsWith(href) ? "bg-green-50 text-green-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+                }`}>
+                <Icon size={18} />
+                <span>{label}</span>
               </Link>
             ))}
-            <button
-              onClick={async () => {
-                await fetch("/api/auth/logout", { method: "POST" });
-                window.location.href = "/login";
-              }}
-              className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left text-red-600 hover:bg-red-50"
-            >
-              <span>🚪</span>
+            <button onClick={logout}
+              className="flex items-center gap-3 px-4 py-3 min-h-[44px] w-full text-left text-red-600 hover:bg-red-50">
+              <LogOut size={18} />
               <span>Cerrar Sesión</span>
             </button>
           </nav>
@@ -90,34 +83,24 @@ export default function MobileNav() {
         <div className="p-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Logo size={36} />
-            <span className="font-bold text-green-800 text-lg">AgroSmart</span>
+            <span className="font-bold text-green-800 text-lg">AgroInteligencia</span>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
+          {navItems.map(({ href, label, icon: Icon }) => (
+            <Link key={href} href={href}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] ${
-                pathname.startsWith(item.href)
-                  ? "bg-green-50 text-green-700 font-medium"
-                  : "text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
+                pathname.startsWith(href) ? "bg-green-50 text-green-700 font-medium" : "text-gray-700 hover:bg-gray-50"
+              }`}>
+              <Icon size={18} />
+              <span>{label}</span>
             </Link>
           ))}
         </nav>
         <div className="p-3 border-t border-gray-200 space-y-1">
-          <button
-            onClick={async () => {
-              await fetch("/api/auth/logout", { method: "POST" });
-              window.location.href = "/login";
-            }}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] w-full text-left text-red-600 hover:bg-red-50"
-          >
-            <span>🚪</span>
+          <button onClick={logout}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg min-h-[44px] w-full text-left text-red-600 hover:bg-red-50">
+            <LogOut size={18} />
             <span>Cerrar Sesión</span>
           </button>
         </div>

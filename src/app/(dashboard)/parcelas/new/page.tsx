@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { MapPin, Locate } from "lucide-react";
 
 export default function NewParcelaPage() {
   const router = useRouter();
@@ -97,7 +98,7 @@ export default function NewParcelaPage() {
               disabled={geoLoading}
               className="text-sm text-green-600 font-medium hover:text-green-700 disabled:opacity-50 flex items-center gap-1 min-h-[44px] px-2"
             >
-              📍 {geoLoading ? "Obteniendo..." : "Usar mi ubicación"}
+              <Locate size={15} /> {geoLoading ? "Obteniendo..." : "Usar mi ubicación"}
             </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
