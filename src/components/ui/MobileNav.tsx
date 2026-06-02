@@ -10,6 +10,7 @@ const navItems = [
   { href: "/parcelas", label: "Parcelas", icon: "🗺️" },
   { href: "/alertas", label: "Alertas", icon: "🔔" },
   { href: "/recordatorios", label: "Recordatorios", icon: "📋" },
+  { href: "/ajustes", label: "Ajustes", icon: "⚙️" },
 ];
 
 function Logo({ size = 32 }: { size?: number }) {

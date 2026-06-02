@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useReverseGeocode } from "@/hooks/useReverseGeocode";
 
 export default function ParcelaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,10 @@ export default function ParcelaDetailPage() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  const lat = parcela ? Number(parcela.latitude) : null;
+  const lon = parcela ? Number(parcela.longitude) : null;
+  const { location, loading: geoLoading } = useReverseGeocode(lat, lon);
+
   if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
   if (!parcela) return <p className="text-red-500">Parcela no encontrada</p>;
 
@@ -33,8 +38,13 @@ export default function ParcelaDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">{parcela.name as string}</h1>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">{parcela.name as string}</h1>
+          <p className="text-sm text-gray-500 mt-0.5">
+            {geoLoading ? "Obteniendo ubicación..." : location ? `📍 ${location}` : `📍 ${lat?.toFixed(4)}, ${lon?.toFixed(4)}`}
+          </p>
+        </div>
         <Link href={`/recomendaciones/${id}`} className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 min-h-[44px] flex items-center">
           Ver Recomendaciones
         </Link>
@@ -42,30 +52,30 @@ export default function ParcelaDetailPage() {
 
       {/* Acciones rápidas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Link href={`/cultivos/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
-          <span className="text-xl">🌿</span>
-          <span className="text-xs text-gray-600">Cultivos</span>
-        </Link>
-        <Link href={`/suelo/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
-          <span className="text-xl">🧪</span>
-          <span className="text-xs text-gray-600">Suelo</span>
-        </Link>
-        <Link href={`/recomendaciones/${id}`} className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
-          <span className="text-xl">💡</span>
-          <span className="text-xs text-gray-600">Recomendaciones</span>
-        </Link>
-        <Link href="/recordatorios" className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
-          <span className="text-xl">📋</span>
-          <span className="text-xs text-gray-600">Recordatorios</span>
-        </Link>
+        {[
+          { href: `/cultivos/${id}`, label: "Cultivos", emoji: "🌿" },
+          { href: `/suelo/${id}`, label: "Suelo", emoji: "🧪" },
+          { href: `/recomendaciones/${id}`, label: "Recomendaciones", emoji: "💡" },
+          { href: "/recordatorios", label: "Recordatorios", emoji: "📋" },
+        ].map((item) => (
+          <Link key={item.href} href={item.href}
+            className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+            <span className="text-xl">{item.emoji}</span>
+            <span className="text-xs text-gray-600">{item.label}</span>
+          </Link>
+        ))}
       </div>
 
       {/* Info parcela */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><span className="text-gray-500">Latitud:</span> <span className="font-medium">{Number(parcela.latitude as string).toFixed(5)}</span></div>
-          <div><span className="text-gray-500">Longitud:</span> <span className="font-medium">{Number(parcela.longitude as string).toFixed(5)}</span></div>
-          <div><span className="text-gray-500">Superficie:</span> <span className="font-medium">{parcela.area_hectares as string} ha</span></div>
+        <h2 className="font-semibold text-gray-800 mb-3">Información</h2>
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="col-span-2">
+            <span className="text-gray-500">Ubicación: </span>
+            <span className="font-medium">{location ?? `${lat?.toFixed(5)}, ${lon?.toFixed(5)}`}</span>
+          </div>
+          <div><span className="text-gray-500">Coordenadas: </span><span className="font-mono text-xs">{lat?.toFixed(5)}, {lon?.toFixed(5)}</span></div>
+          <div><span className="text-gray-500">Superficie: </span><span className="font-medium">{parcela.area_hectares as string} ha</span></div>
         </div>
       </div>
 
@@ -92,7 +102,7 @@ export default function ParcelaDetailPage() {
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">{climate?.isStale ? "Datos desactualizados" : "Sin datos climáticos disponibles"}</p>
+          <p className="text-gray-500 text-sm">Sin datos climáticos aún. Los datos se actualizan diariamente.</p>
         )}
       </div>
 
@@ -107,20 +117,17 @@ export default function ParcelaDetailPage() {
         {cultivos.length === 0 ? (
           <div className="text-center py-4">
             <p className="text-gray-500 text-sm mb-2">Sin cultivos registrados</p>
-            <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline">
-              + Agregar primer cultivo
-            </Link>
+            <Link href={`/cultivos/${id}`} className="text-green-600 text-sm font-medium hover:underline">+ Agregar primer cultivo</Link>
           </div>
         ) : (
           <ul className="space-y-2">
             {cultivos.slice(0, 5).map((c) => (
               <li key={c.id as string} className="flex justify-between items-center text-sm py-2 border-b border-gray-100 last:border-0">
-                <span className="font-medium capitalize">{c.species as string} {c.variety ? `(${c.variety})` : ""}</span>
+                <span className="font-medium capitalize">{c.species as string}{c.variety ? ` — ${c.variety}` : ""}</span>
                 <span className={`px-2 py-0.5 rounded text-xs ${
                   c.status === "active" ? "bg-green-100 text-green-700" :
-                  c.status === "harvested" ? "bg-blue-100 text-blue-700" :
-                  "bg-red-100 text-red-700"
-                }`}>{c.status as string}</span>
+                  c.status === "harvested" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"
+                }`}>{c.status === "active" ? "Activo" : c.status === "harvested" ? "Cosechado" : "Perdido"}</span>
               </li>
             ))}
           </ul>

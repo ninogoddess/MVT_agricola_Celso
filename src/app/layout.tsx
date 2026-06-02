@@ -5,8 +5,11 @@ export const metadata: Metadata = {
   title: "AgroSmart - Gestión de Cosechas Inteligentes",
   description: "Sistema de gestión agrícola con datos climáticos en tiempo real, recomendaciones de siembra/cosecha y recordatorios de tareas.",
   icons: {
-    icon: "/assets/logo_principal.png",
+    icon: [
+      { url: "/assets/logo_principal.png", type: "image/png" },
+    ],
     apple: "/assets/logo_principal.png",
+    shortcut: "/assets/logo_principal.png",
   },
 };
 
