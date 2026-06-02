@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { MapPin, Layers, Plus } from "lucide-react";
 
@@ -15,8 +15,14 @@ interface Parcela {
 }
 
 const PRESET_COLORS = [
-  "#16a34a", "#2563eb", "#dc2626", "#d97706",
-  "#7c3aed", "#0891b2", "#db2777", "#65a30d",
+  { value: "#16a34a", label: "Verde" },
+  { value: "#2563eb", label: "Azul" },
+  { value: "#dc2626", label: "Rojo" },
+  { value: "#d97706", label: "Naranja" },
+  { value: "#7c3aed", label: "Violeta" },
+  { value: "#0891b2", label: "Celeste" },
+  { value: "#db2777", label: "Rosa" },
+  { value: "#65a30d", label: "Lima" },
 ];
 
 function LocationBadge({ lat, lon }: { lat: number; lon: number }) {
@@ -30,10 +36,7 @@ function LocationBadge({ lat, lon }: { lat: number; lon: number }) {
       .then((r) => r.json())
       .then((d) => {
         const a = d.address;
-        const parts = [
-          a.village || a.town || a.city || a.municipality,
-          a.state,
-        ].filter(Boolean);
+        const parts = [a.village || a.town || a.city || a.municipality, a.state].filter(Boolean);
         setLocation(parts.join(", ") || null);
       })
       .catch(() => null);
@@ -47,10 +50,66 @@ function LocationBadge({ lat, lon }: { lat: number; lon: number }) {
   );
 }
 
+// Color picker flotante con position:fixed para que nunca se corte
+function ColorPickerPopup({
+  parcelaId,
+  currentColor,
+  anchorRef,
+  onSelect,
+  onClose,
+}: {
+  parcelaId: string;
+  currentColor: string;
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
+  onSelect: (id: string, color: string) => void;
+  onClose: () => void;
+}) {
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!anchorRef.current) return;
+    const rect = anchorRef.current.getBoundingClientRect();
+    const popupWidth = 232;
+    let left = rect.right - popupWidth;
+    if (left < 8) left = 8;
+    setPos({ top: rect.bottom + 8, left });
+  }, [anchorRef]);
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div className="fixed inset-0 z-40" onClick={onClose} />
+      {/* Popup */}
+      <div
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-58"
+        style={{ top: pos.top, left: pos.left, width: 232 }}
+      >
+        <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Color de parcela</p>
+        <div className="grid grid-cols-4 gap-3">
+          {PRESET_COLORS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => onSelect(parcelaId, value)}
+              title={label}
+              className={`w-12 h-12 rounded-xl transition-all hover:scale-110 shadow-sm ${
+                currentColor === value
+                  ? "ring-4 ring-offset-1 ring-gray-700 scale-110"
+                  : "ring-2 ring-transparent hover:ring-gray-300"
+              }`}
+              style={{ backgroundColor: value }}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function ParcelasPage() {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingColor, setEditingColor] = useState<string | null>(null);
+  const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
 
   useEffect(() => {
     fetch("/api/parcelas")
@@ -81,14 +140,15 @@ export default function ParcelasPage() {
     );
   }
 
+  const editingParcela = parcelas.find((p) => p.id === editingColor);
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Parcelas</h1>
         <Link href="/parcelas/new"
           className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px] flex items-center gap-2">
-          <Plus size={18} />
-          Nueva
+          <Plus size={18} /> Nueva
         </Link>
       </div>
 
@@ -104,9 +164,7 @@ export default function ParcelasPage() {
             const color = p.color ?? "#16a34a";
             return (
               <div key={p.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
-                {/* Color bar */}
                 <div className="h-1.5" style={{ backgroundColor: color }} />
-
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <Link href={`/parcelas/${p.id}`} className="flex-1 min-w-0">
@@ -118,34 +176,14 @@ export default function ParcelasPage() {
                       </div>
                     </Link>
 
-                    {/* Color picker */}
-                    <div className="relative flex-shrink-0">
-                      <button
-                        onClick={() => setEditingColor(editingColor === p.id ? null : p.id)}
-                        className="w-7 h-7 rounded-full border-2 border-white shadow-md ring-1 ring-gray-200 hover:scale-110 transition-transform"
-                        style={{ backgroundColor: color }}
-                        title="Cambiar color"
-                      />
-                    {/* Color picker - dropdown más amplio */}
-                      {editingColor === p.id && (
-                        <div className="absolute right-0 top-10 z-10 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 w-56">
-                          <p className="text-xs font-medium text-gray-500 mb-3">Elige un color</p>
-                          <div className="grid grid-cols-4 gap-3">
-                            {PRESET_COLORS.map((c) => (
-                              <button
-                                key={c}
-                                onClick={() => updateColor(p.id, c)}
-                                className={`w-10 h-10 rounded-xl border-4 hover:scale-110 transition-transform shadow-sm ${
-                                  color === c ? "border-gray-800 scale-110" : "border-transparent"
-                                }`}
-                                style={{ backgroundColor: c }}
-                                title={c}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {/* Botón de color — sin relative/overflow */}
+                    <button
+                      ref={(el) => { buttonRefs.current[p.id] = el; }}
+                      onClick={() => setEditingColor(editingColor === p.id ? null : p.id)}
+                      className="w-8 h-8 rounded-full border-2 border-white shadow-md ring-1 ring-gray-200 hover:scale-110 transition-transform flex-shrink-0"
+                      style={{ backgroundColor: color }}
+                      title="Cambiar color"
+                    />
                   </div>
                 </div>
               </div>
@@ -154,9 +192,15 @@ export default function ParcelasPage() {
         </div>
       )}
 
-      {/* Cerrar color picker al clickar fuera */}
-      {editingColor && (
-        <div className="fixed inset-0 z-0" onClick={() => setEditingColor(null)} />
+      {/* Color picker flotante — renderizado fuera de las tarjetas */}
+      {editingColor && editingParcela && (
+        <ColorPickerPopup
+          parcelaId={editingColor}
+          currentColor={editingParcela.color ?? "#16a34a"}
+          anchorRef={{ current: buttonRefs.current[editingColor] }}
+          onSelect={updateColor}
+          onClose={() => setEditingColor(null)}
+        />
       )}
     </div>
   );
