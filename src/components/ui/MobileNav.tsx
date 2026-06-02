@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 
 const navItems = [
@@ -10,6 +11,20 @@ const navItems = [
   { href: "/alertas", label: "Alertas", icon: "🔔" },
   { href: "/recordatorios", label: "Recordatorios", icon: "📋" },
 ];
+
+function Logo({ size = 32 }: { size?: number }) {
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      <Image
+        src="/assets/logo_principal.png"
+        alt="AgroSmart"
+        fill
+        className="object-contain"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+      />
+    </div>
+  );
+}
 
 export default function MobileNav() {
   const [open, setOpen] = useState(false);
@@ -20,7 +35,7 @@ export default function MobileNav() {
       {/* Header mobile */}
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <span className="text-2xl">🌱</span>
+          <Logo size={32} />
           <span className="font-bold text-green-800">AgroSmart</span>
         </Link>
         <button
@@ -73,7 +88,7 @@ export default function MobileNav() {
       <aside className="hidden lg:flex lg:flex-col lg:w-60 lg:fixed lg:inset-y-0 bg-white border-r border-gray-200">
         <div className="p-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <span className="text-2xl">🌱</span>
+            <Logo size={36} />
             <span className="font-bold text-green-800 text-lg">AgroSmart</span>
           </Link>
         </div>
@@ -93,7 +108,7 @@ export default function MobileNav() {
             </Link>
           ))}
         </nav>
-        <div className="p-3 border-t border-gray-200">
+        <div className="p-3 border-t border-gray-200 space-y-1">
           <button
             onClick={async () => {
               await fetch("/api/auth/logout", { method: "POST" });
