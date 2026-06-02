@@ -126,16 +126,23 @@ export default function ParcelasPage() {
                         style={{ backgroundColor: color }}
                         title="Cambiar color"
                       />
+                    {/* Color picker - dropdown más amplio */}
                       {editingColor === p.id && (
-                        <div className="absolute right-0 top-9 z-10 bg-white rounded-xl shadow-xl border border-gray-100 p-2 grid grid-cols-4 gap-1.5">
-                          {PRESET_COLORS.map((c) => (
-                            <button
-                              key={c}
-                              onClick={() => updateColor(p.id, c)}
-                              className={`w-7 h-7 rounded-full border-2 hover:scale-110 transition-transform ${color === c ? "border-gray-600" : "border-white"} shadow`}
-                              style={{ backgroundColor: c }}
-                            />
-                          ))}
+                        <div className="absolute right-0 top-10 z-10 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 w-56">
+                          <p className="text-xs font-medium text-gray-500 mb-3">Elige un color</p>
+                          <div className="grid grid-cols-4 gap-3">
+                            {PRESET_COLORS.map((c) => (
+                              <button
+                                key={c}
+                                onClick={() => updateColor(p.id, c)}
+                                className={`w-10 h-10 rounded-xl border-4 hover:scale-110 transition-transform shadow-sm ${
+                                  color === c ? "border-gray-800 scale-110" : "border-transparent"
+                                }`}
+                                style={{ backgroundColor: c }}
+                                title={c}
+                              />
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
