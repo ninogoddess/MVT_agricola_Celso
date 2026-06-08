@@ -77,14 +77,14 @@ export default function RecordatoriosPage() {
     }
   }
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   const pending = reminders.filter((r) => r.status !== "completed");
   const completed = reminders.filter((r) => r.status === "completed");
   const displayed = tab === "pending" ? pending : completed;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Recordatorios</h1>
         <button onClick={() => setShowForm(!showForm)}
@@ -170,7 +170,7 @@ export default function RecordatoriosPage() {
         <div className="space-y-3">
           {displayed.map((reminder) => (
             <div key={reminder.id}
-              className={`bg-white rounded-lg border p-4 flex items-center justify-between ${
+              className={`bg-white rounded-xl border p-4 flex items-center justify-between animate-fade-in-up card-hover ${
                 reminder.status === "upcoming" ? "border-amber-300 bg-amber-50" :
                 reminder.status === "completed" ? "border-gray-100 opacity-75" : "border-gray-200"
               }`}>

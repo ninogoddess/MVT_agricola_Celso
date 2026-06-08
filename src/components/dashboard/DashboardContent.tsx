@@ -140,11 +140,13 @@ export default function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-48" />
+      <div className="space-y-4">
+        <div className="h-8 skeleton w-48" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-gray-200 rounded-lg" />)}
+          {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 skeleton" />)}
         </div>
+        <div className="h-32 skeleton" />
+        <div className="h-48 skeleton" />
       </div>
     );
   }
@@ -152,14 +154,14 @@ export default function DashboardContent() {
   if (!data) return <p className="text-gray-500">Error cargando dashboard</p>;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+    <div className="space-y-6 animate-fade-in-up">
+      <h1 className="text-2xl font-bold text-gray-800 animate-fade-in-up-1">Dashboard</h1>
 
       {/* Notification banner */}
-      <NotificationBanner />
+      <div className="animate-fade-in-up-2"><NotificationBanner /></div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in-up-2">
         <SummaryCard icon={Map} label="Parcelas" value={data.summary.activeParcelas} />
         <SummaryCard icon={Sprout} label="Cultivos" value={data.summary.activeCultivos} />
         <SummaryCard icon={Bell} label="Alertas" value={data.summary.pendingAlerts} color="red" />
@@ -248,8 +250,8 @@ function SummaryCard({ icon: Icon, label, value, color }: { icon: LucideIcon; la
   const iconColor = color === "red" ? "text-red-500" : color === "amber" ? "text-amber-500" : "text-green-600";
 
   return (
-    <div className={`rounded-lg border p-4 ${colorClasses}`}>
-      <Icon size={22} className={`${iconColor} mb-1`} />
+    <div className={`rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colorClasses}`}>
+      <Icon size={22} className={`${iconColor} mb-2`} />
       <div className="text-2xl font-bold text-gray-800">{value}</div>
       <div className="text-sm text-gray-500">{label}</div>
     </div>

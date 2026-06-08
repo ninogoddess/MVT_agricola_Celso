@@ -81,7 +81,7 @@ function ColorPickerPopup({
       <div className="fixed inset-0 z-40" onClick={onClose} />
       {/* Popup */}
       <div
-        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 w-58"
+        className="fixed z-50 bg-white rounded-2xl shadow-2xl border border-gray-100 p-4 animate-scale-in"
         style={{ top: pos.top, left: pos.left, width: 232 }}
       >
         <p className="text-xs font-semibold text-gray-500 mb-3 uppercase tracking-wide">Color de parcela</p>
@@ -132,9 +132,9 @@ export default function ParcelasPage() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="h-8 bg-gray-200 rounded w-32 animate-pulse" />
+        <div className="h-8 skeleton w-32" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {[1, 2, 3].map((i) => <div key={i} className="h-28 bg-gray-200 rounded-lg animate-pulse" />)}
+          {[1, 2, 3].map((i) => <div key={i} className="h-28 skeleton" />)}
         </div>
       </div>
     );
@@ -143,7 +143,7 @@ export default function ParcelasPage() {
   const editingParcela = parcelas.find((p) => p.id === editingColor);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Parcelas</h1>
         <Link href="/parcelas/new"
@@ -163,7 +163,7 @@ export default function ParcelasPage() {
           {parcelas.map((p) => {
             const color = p.color ?? "#16a34a";
             return (
-              <div key={p.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+              <div key={p.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden card-hover transition-all duration-200 animate-fade-in-up">
                 <div className="h-1.5" style={{ backgroundColor: color }} />
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">

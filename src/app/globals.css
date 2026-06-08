@@ -20,7 +20,71 @@ body {
   min-height: 100dvh;
 }
 
-/* Mobile-first: min font 16px */
-html {
-  font-size: 16px;
+html { font-size: 16px; }
+
+/* ── Fade in up ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease both;
+}
+.animate-fade-in-up-1 { animation: fadeInUp 0.4s 0.05s ease both; }
+.animate-fade-in-up-2 { animation: fadeInUp 0.4s 0.10s ease both; }
+.animate-fade-in-up-3 { animation: fadeInUp 0.4s 0.15s ease both; }
+.animate-fade-in-up-4 { animation: fadeInUp 0.4s 0.20s ease both; }
+.animate-fade-in-up-5 { animation: fadeInUp 0.4s 0.25s ease both; }
+
+/* ── Fade in ── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fadeIn 0.3s ease both; }
+
+/* ── Slide in from right (panel) ── */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slide-in-right {
+  animation: slideInRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* ── Scale in (modals, popovers) ── */
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.animate-scale-in { animation: scaleIn 0.2s ease both; }
+
+/* ── Smooth page transitions ── */
+main { animation: fadeInUp 0.35s ease both; }
+
+/* ── Card hover lift ── */
+.card-hover {
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-hover:hover {
+  box-shadow: 0 8px 24px -4px rgba(0,0,0,0.10);
+  transform: translateY(-2px);
+}
+
+/* ── Button press ── */
+button, a[role="button"] {
+  transition: opacity 0.15s ease, transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+button:active { transform: scale(0.97); }
+
+/* ── Skeleton shimmer ── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: 8px;
 }

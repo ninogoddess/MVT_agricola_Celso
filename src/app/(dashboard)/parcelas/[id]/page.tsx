@@ -32,13 +32,13 @@ export default function ParcelaDetailPage() {
   const lon = parcela ? Number(parcela.longitude) : null;
   const { location, loading: geoLoading } = useReverseGeocode(lat, lon);
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
   if (!parcela) return <p className="text-red-500">Parcela no encontrada</p>;
 
   const climateData = climate?.data as { temperature_celsius?: number; relative_humidity_percent?: number; wind_speed_kmh?: number; precipitation_probability_percent?: number } | null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">{parcela.name as string}</h1>
@@ -53,7 +53,7 @@ export default function ParcelaDetailPage() {
       </div>
 
       {/* Acciones rápidas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-in-up-2">
         {[
           { href: `/cultivos/${id}`, label: "Cultivos", icon: Sprout },
           { href: `/suelo/${id}`, label: "Suelo", icon: FlaskConical },
@@ -61,9 +61,9 @@ export default function ParcelaDetailPage() {
           { href: "/recordatorios", label: "Recordatorios", icon: CalendarCheck },
         ].map((item) => (
           <Link key={item.href} href={item.href}
-            className="flex flex-col items-center gap-1 p-3 bg-white rounded-lg border border-gray-200 hover:shadow-md transition-shadow min-h-[44px]">
+            className="flex flex-col items-center gap-1.5 p-3 bg-white rounded-xl border border-gray-200 card-hover min-h-[44px] transition-all">
             <item.icon size={20} className="text-green-600" />
-            <span className="text-xs text-gray-600">{item.label}</span>
+            <span className="text-xs text-gray-600 font-medium">{item.label}</span>
           </Link>
         ))}
       </div>
@@ -87,23 +87,18 @@ export default function ParcelaDetailPage() {
           <CloudSun size={18} className="text-blue-500" /> Clima Actual
         </h2>
         {climateData ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div className="bg-blue-50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-blue-700">{climateData.temperature_celsius ?? "—"}°C</div>
-              <div className="text-blue-500 text-xs">Temperatura</div>
-            </div>
-            <div className="bg-cyan-50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-cyan-700">{climateData.relative_humidity_percent ?? "—"}%</div>
-              <div className="text-cyan-500 text-xs">Humedad</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-gray-700">{climateData.wind_speed_kmh ?? "—"} km/h</div>
-              <div className="text-gray-500 text-xs">Viento</div>
-            </div>
-            <div className="bg-indigo-50 rounded-lg p-3 text-center">
-              <div className="text-xl font-bold text-indigo-700">{climateData.precipitation_probability_percent ?? "—"}%</div>
-              <div className="text-indigo-500 text-xs">Prob. Lluvia</div>
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm animate-fade-in-up-3">
+            {[
+              { value: climateData.temperature_celsius, unit: "°C", label: "Temperatura", bg: "bg-blue-50", text: "text-blue-700" },
+              { value: climateData.relative_humidity_percent, unit: "%", label: "Humedad", bg: "bg-cyan-50", text: "text-cyan-700" },
+              { value: climateData.wind_speed_kmh, unit: " km/h", label: "Viento", bg: "bg-gray-50", text: "text-gray-700" },
+              { value: climateData.precipitation_probability_percent, unit: "%", label: "Prob. Lluvia", bg: "bg-indigo-50", text: "text-indigo-700" },
+            ].map(({ value, unit, label, bg, text }) => (
+              <div key={label} className={`${bg} rounded-xl p-3 text-center transition-all hover:scale-105`}>
+                <div className={`text-xl font-bold ${text}`}>{value ?? "—"}{value != null ? unit : ""}</div>
+                <div className={`text-xs ${text} opacity-70`}>{label}</div>
+              </div>
+            ))}
           </div>
         ) : (
           <p className="text-gray-500 text-sm">Sin datos climáticos aún. Los datos se actualizan diariamente.</p>

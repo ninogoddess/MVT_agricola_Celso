@@ -122,10 +122,10 @@ export default function CultivosPage() {
     setCultivos((prev) => prev.map((c) => c.id === id ? { ...c, status } : c));
   }
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Cultivos</h1>
         <button onClick={() => setShowForm(!showForm)}
@@ -228,7 +228,7 @@ export default function CultivosPage() {
       ) : (
         <div className="space-y-3">
           {cultivos.map((c) => (
-            <div key={c.id} className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between">
+            <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between card-hover animate-fade-in-up">
               <div>
                 <div className="font-medium text-gray-800 capitalize">{c.species}{c.variety ? ` — ${c.variety}` : ""}</div>
                 <div className="text-sm text-gray-500 mt-1">

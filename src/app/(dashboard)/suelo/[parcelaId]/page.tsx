@@ -49,10 +49,10 @@ export default function SueloPage() {
     }
   }
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Datos de Suelo</h1>
         <button onClick={() => setShowForm(!showForm)}
@@ -102,7 +102,7 @@ export default function SueloPage() {
             </thead>
             <tbody>
               {soilData.map((s) => (
-                <tr key={s.id} className="border-t border-gray-100">
+                <tr key={s.id} className="border-t border-gray-100 hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3">{new Date(s.measurement_date).toLocaleDateString("es-CL")}</td>
                   <td className="px-4 py-3">{s.ph}</td>
                   <td className="px-4 py-3">{s.humidity_percent}%</td>

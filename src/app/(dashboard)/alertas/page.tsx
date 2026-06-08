@@ -37,10 +37,10 @@ export default function AlertasPage() {
     setAlerts((prev) => prev.filter((a) => a.id !== id));
   }
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Alertas</h1>
 
       {alerts.length === 0 ? (
@@ -56,8 +56,9 @@ export default function AlertasPage() {
             const Icon = cfg?.Icon ?? BadgeAlert;
             const color = cfg?.color ?? "text-gray-500";
             return (
-              <div key={alert.id}
-                className="bg-white rounded-lg border border-red-100 p-4 flex items-center justify-between gap-3">
+              <div
+              key={alert.id}
+              className="bg-white rounded-xl border border-red-100 p-4 flex items-center justify-between gap-3 animate-fade-in-up card-hover">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <div className="mt-0.5 flex-shrink-0">
                     <Icon size={20} className={color} />

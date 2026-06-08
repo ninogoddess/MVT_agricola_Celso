@@ -31,10 +31,10 @@ export default function RecomendacionesPage() {
       .finally(() => setLoading(false));
   }, [parcelaId]);
 
-  if (loading) return <div className="animate-pulse h-48 bg-gray-200 rounded-lg" />;
+  if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Recomendaciones</h1>
 
       {recommendations.length === 0 ? (
@@ -48,7 +48,7 @@ export default function RecomendacionesPage() {
           {recommendations.map((rec) => {
             const isSiembra = rec.recommendation_type === "siembra";
             return (
-              <div key={rec.id} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+              <div key={rec.id} className="bg-white rounded-xl border border-gray-200 p-4 space-y-3 card-hover animate-fade-in-up">
                 <div className="flex items-center justify-between">
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 ${
                     isSiembra ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"

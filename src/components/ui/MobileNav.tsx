@@ -56,9 +56,9 @@ export default function MobileNav() {
 
       {/* Overlay mobile */}
       {open && (
-        <div className="fixed inset-0 z-40 lg:hidden" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-40 lg:hidden animate-fade-in" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/20" />
-          <nav className="absolute top-[57px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg"
+          <nav className="absolute top-[57px] left-0 right-0 bg-white border-b border-gray-200 shadow-lg animate-fade-in-up"
             onClick={(e) => e.stopPropagation()}>
             {navItems.map(({ href, label, icon: Icon }) => (
               <Link key={href} href={href} onClick={() => setOpen(false)}
