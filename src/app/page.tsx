@@ -31,7 +31,7 @@ const features = [
 // ─── Pain points ─────────────────────────────────────────
 const pains = [
   { icon: CloudRain, text: "¿Cuándo llueve esta semana en tu parcela?" },
-  { icon: Thermometer, text: "¿Hace frío suficiente para sembrar el cultivo?" },
+  { icon: Thermometer, text: "¿Hace buen tiempo para sembrar el cultivo?" },
   { icon: Wind, text: "¿Debería regar hoy o esperar la lluvia?" },
   { icon: Clock, text: "¿Cuándo debo fertilizar para maximizar el rendimiento?" },
 ];
