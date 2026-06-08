@@ -5,12 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Map, Bell, CalendarCheck, Settings, LogOut, Menu, X
+  LayoutDashboard, Map, Bell, CalendarCheck, Settings, LogOut, Menu, X, Lightbulb
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/parcelas", label: "Parcelas", icon: Map },
+  { href: "/recomendaciones-globales", label: "Recomendaciones", icon: Lightbulb },
   { href: "/alertas", label: "Alertas", icon: Bell },
   { href: "/recordatorios", label: "Recordatorios", icon: CalendarCheck },
   { href: "/ajustes", label: "Ajustes", icon: Settings },
