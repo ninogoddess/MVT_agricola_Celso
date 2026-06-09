@@ -26,6 +26,7 @@ export class CultivoService {
 
     const { data, error } = await this.repo.create({
       parcela_id: parcelaId,
+      name: input.name,
       species: input.species,
       variety: input.variety,
       planting_date: input.plantingDate,

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const createCultivoSchema = z.object({
+  name: z.string().min(1, 'El nombre es obligatorio').max(255).optional(),
   species: z.string().min(1, 'La especie es obligatoria').max(255),
   variety: z.string().max(255).optional(),
   plantingDate: z.string().date('Fecha de siembra inválida'),

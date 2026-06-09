@@ -3,14 +3,32 @@
 import { useState } from "react";
 import { Check, Zap, Building2, Sprout, X, ArrowRight } from "lucide-react";
 
-const PLANS = [
+export interface Plan {
+  id: "gratis" | "pro" | "organizacion";
+  name: string;
+  price: string;
+  priceNote?: string;
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  badgeColor: string;
+  features: string[];
+  cta: string;
+  popular?: boolean;
+}
+
+const PLANS: Plan[] = [
   {
     id: "gratis",
     name: "Gratis",
     price: "$0",
     priceNote: "para siempre",
-    Icon: Sprout,
-    accent: "gray",
+    icon: Sprout,
+    color: "text-gray-700",
+    bgColor: "bg-gray-50",
+    borderColor: "border-gray-200",
+    badgeColor: "bg-gray-100 text-gray-600",
     features: [
       "1 parcela",
       "3 cultivos activos",
@@ -19,15 +37,17 @@ const PLANS = [
       "Recomendaciones de siembra",
     ],
     cta: "Plan actual",
-    popular: false,
   },
   {
     id: "pro",
     name: "Pro",
-    price: "$1.990",
+    price: "$990",
     priceNote: "CLP / mes",
-    Icon: Zap,
-    accent: "green",
+    icon: Zap,
+    color: "text-green-700",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-400",
+    badgeColor: "bg-green-100 text-green-700",
     features: [
       "10 parcelas",
       "100 cultivos activos",
@@ -45,153 +65,146 @@ const PLANS = [
     name: "Organización",
     price: "$9.990",
     priceNote: "CLP / mes",
-    Icon: Building2,
-    accent: "purple",
+    icon: Building2,
+    color: "text-purple-700",
+    bgColor: "bg-purple-50",
+    borderColor: "border-purple-300",
+    badgeColor: "bg-purple-100 text-purple-700",
     features: [
       "100 parcelas",
       "1.000 cultivos activos",
       "1.000 recordatorios",
-      "Múltiples usuarios",
+      "Múltiples usuarios / trabajadores",
       "Panel de administración",
       "Alertas climáticas avanzadas",
       "Exportación y reportes",
       "Soporte dedicado",
     ],
     cta: "Elegir Organización",
-    popular: false,
   },
-] as const;
+];
 
-type PlanId = "gratis" | "pro" | "organizacion";
-
-const ACCENT: Record<string, { border: string; bg: string; text: string; btn: string; badge: string; ring: string }> = {
-  gray:   { border: "border-gray-200",   bg: "bg-gray-50",    text: "text-gray-600",   btn: "bg-gray-100 text-gray-600 hover:bg-gray-200",        badge: "bg-gray-100 text-gray-500",   ring: "" },
-  green:  { border: "border-green-400",  bg: "bg-green-50",   text: "text-green-700",  btn: "bg-green-600 text-white hover:bg-green-700 shadow-md", badge: "bg-green-100 text-green-700", ring: "shadow-xl shadow-green-100" },
-  purple: { border: "border-purple-300", bg: "bg-purple-50",  text: "text-purple-700", btn: "bg-purple-600 text-white hover:bg-purple-700",        badge: "bg-purple-100 text-purple-700", ring: "" },
-};
-
-interface Props {
-  currentPlan?: PlanId;
-  modal?: boolean;
+interface PlanesViewProps {
+  currentPlan?: "gratis" | "pro" | "organizacion";
   onClose?: () => void;
+  modal?: boolean;
 }
 
-export default function PlanesView({ currentPlan = "gratis", modal = false, onClose }: Props) {
-  const [selected, setSelected] = useState<PlanId | null>(null);
+export default function PlanesView({ currentPlan = "gratis", onClose, modal = false }: PlanesViewProps) {
+  const [selected, setSelected] = useState<string | null>(null);
 
-  const inner = (
-    <div className="flex flex-col h-full">
-      {/* ── Header ── */}
-      <div className={`flex-shrink-0 px-6 pt-6 pb-4 ${modal ? "border-b border-gray-100" : ""}`}>
-        <div className="flex items-start justify-between gap-4">
+  return (
+    <div className={modal ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in" : ""}>
+      <div className={modal ? "bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90dvh] overflow-y-auto animate-scale-in" : "space-y-6"}>
+
+        {/* Header */}
+        <div className={`${modal ? "p-6 border-b border-gray-100 sticky top-0 bg-white z-10" : ""} flex items-center justify-between`}>
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Planes de Agrencia</h2>
-            <p className="text-gray-500 text-sm mt-1">Elige el plan que mejor se adapta a tu campo</p>
+            <p className="text-gray-500 text-sm mt-0.5">Elige el plan que mejor se adapta a tu campo</p>
           </div>
           {modal && onClose && (
             <button onClick={onClose}
-              className="flex-shrink-0 text-gray-400 hover:text-gray-600 w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
+              className="text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl hover:bg-gray-100">
               <X size={20} />
             </button>
           )}
         </div>
-      </div>
 
-      {/* ── Cards ── */}
-      <div className="flex-1 overflow-y-auto px-6 py-5">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 min-w-0">
+        {/* Cards */}
+        <div className={`${modal ? "p-6" : ""} grid grid-cols-1 md:grid-cols-3 gap-5`}>
           {PLANS.map((plan) => {
-            const a = ACCENT[plan.accent];
+            const Icon = plan.icon;
             const isCurrent = plan.id === currentPlan;
-            const { Icon } = plan;
+            const isSelected = selected === plan.id;
 
             return (
               <div key={plan.id}
-                className={`relative rounded-2xl border-2 ${a.border} ${a.ring} flex flex-col p-5 transition-all`}>
+                className={`relative rounded-2xl border-2 p-6 flex flex-col transition-all duration-200 card-hover animate-fade-in-up ${
+                  plan.popular
+                    ? "border-green-400 shadow-lg shadow-green-100"
+                    : plan.borderColor
+                } ${isCurrent ? "ring-2 ring-offset-2 ring-green-500" : ""}`}>
 
                 {/* Popular badge */}
                 {plan.popular && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
-                    <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                       Más popular
                     </span>
                   </div>
                 )}
 
-                {/* Icon + name */}
-                <div className={`w-11 h-11 rounded-xl ${a.bg} flex items-center justify-center mb-3 mt-1 flex-shrink-0`}>
-                  <Icon size={22} className={a.text} />
+                {/* Plan header */}
+                <div className={`w-12 h-12 rounded-xl ${plan.bgColor} flex items-center justify-center mb-4`}>
+                  <Icon size={24} className={plan.color} />
                 </div>
 
-                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <h3 className="text-lg font-bold text-gray-900">{plan.name}</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
                   {isCurrent && (
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${a.badge}`}>Actual</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${plan.badgeColor}`}>
+                      Actual
+                    </span>
                   )}
                 </div>
 
-                {/* Price */}
-                <div className="mb-4">
-                  <span className="text-2xl font-extrabold text-gray-900">{plan.price}</span>
-                  <span className="text-gray-400 text-sm ml-1">{plan.priceNote}</span>
+                <div className="mb-5">
+                  <span className="text-3xl font-bold text-gray-900">{plan.price}</span>
+                  {plan.priceNote && (
+                    <span className="text-gray-500 text-sm ml-1">{plan.priceNote}</span>
+                  )}
                 </div>
 
                 {/* Features */}
-                <ul className="space-y-2 flex-1 mb-5">
+                <ul className="space-y-2.5 flex-1 mb-6">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-gray-700 leading-snug">
-                      <Check size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
-                      <span>{f}</span>
+                    <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
+                      <Check size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
+                      {f}
                     </li>
                   ))}
                 </ul>
 
                 {/* CTA */}
                 <button
-                  onClick={() => { if (!isCurrent) setSelected(plan.id as PlanId); }}
+                  onClick={() => { if (!isCurrent) setSelected(plan.id); }}
                   disabled={isCurrent}
-                  className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-1.5 ${
-                    isCurrent ? "bg-gray-100 text-gray-400 cursor-default" : a.btn
-                  }`}>
+                  className={`w-full py-3 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-2 ${
+                    isCurrent
+                      ? "bg-gray-100 text-gray-400 cursor-default"
+                      : plan.popular
+                      ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
+                      : `${plan.bgColor} ${plan.color} border-2 ${plan.borderColor} hover:opacity-80`
+                  }`}
+                >
                   {isCurrent ? "Plan actual" : plan.cta}
-                  {!isCurrent && <ArrowRight size={14} />}
+                  {!isCurrent && <ArrowRight size={15} />}
                 </button>
               </div>
             );
           })}
         </div>
 
-        {/* Coming soon */}
-        <div className="mt-5 bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 text-center">
-          💳 Los pagos están próximamente disponibles. Para actualizar tu plan escríbenos a{" "}
-          <a href="mailto:hola@agrencia.cl" className="font-semibold underline">hola@agrencia.cl</a>
+        {/* Coming soon notice */}
+        <div className={`${modal ? "px-6 pb-6" : ""}`}>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 text-center">
+            💳 Los pagos en línea están próximamente disponibles. Para actualizar tu plan contáctanos en{" "}
+            <a href="mailto:hola@agrencia.cl" className="font-semibold underline">hola@agrencia.cl</a>
+          </div>
         </div>
 
-        {/* Selected feedback */}
+        {/* Selected feedback (para cuando se implementen pagos) */}
         {selected && (
-          <div className="mt-3 bg-green-50 border border-green-200 rounded-xl p-3 text-sm text-green-700 flex items-center justify-between">
-            <span>Seleccionaste <strong>{PLANS.find(p => p.id === selected)?.name}</strong>. Pronto podrás pagar en línea.</span>
-            <button onClick={() => setSelected(null)} className="text-green-400 hover:text-green-600 ml-2 flex-shrink-0">
-              <X size={15} />
-            </button>
+          <div className={`${modal ? "px-6 pb-6" : ""}`}>
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 flex items-center justify-between">
+              <span>Seleccionaste el plan <strong>{PLANS.find(p => p.id === selected)?.name}</strong>. Los pagos estarán disponibles próximamente.</span>
+              <button onClick={() => setSelected(null)} className="text-green-400 hover:text-green-600 ml-3">
+                <X size={16} />
+              </button>
+            </div>
           </div>
         )}
-      </div>
-    </div>
-  );
-
-  if (!modal) {
-    return <div className="animate-fade-in-up">{inner}</div>;
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in"
-      onClick={onClose}>
-      <div
-        className="bg-white rounded-2xl shadow-2xl animate-scale-in flex flex-col"
-        style={{ width: "min(95vw, 860px)", maxHeight: "min(90dvh, 700px)" }}
-        onClick={(e) => e.stopPropagation()}>
-        {inner}
       </div>
     </div>
   );

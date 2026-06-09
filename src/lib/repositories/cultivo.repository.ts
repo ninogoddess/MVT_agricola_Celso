@@ -44,6 +44,7 @@ export class CultivoRepository extends TenantScopedRepository {
 
   async create(input: {
     parcela_id: string;
+    name?: string;
     species: string;
     variety?: string;
     planting_date: string;

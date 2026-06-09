@@ -6,6 +6,7 @@ import { Sprout, CheckCircle2, Lightbulb, CalendarDays } from "lucide-react";
 
 interface Cultivo {
   id: string;
+  name: string | null;
   species: string;
   variety: string | null;
   planting_date: string;
@@ -44,6 +45,7 @@ export default function CultivosPage() {
   const [cropParams, setCropParams] = useState<CropParam[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [cultivoName, setCultivoName] = useState("");
   const [selectedSpecies, setSelectedSpecies] = useState("");
   const [selectedVariety, setSelectedVariety] = useState("");
   const [plantingDate, setPlantingDate] = useState("");
@@ -97,6 +99,7 @@ export default function CultivosPage() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        name: cultivoName || undefined,
         species: selectedSpecies,
         variety: selectedVariety || undefined,
         plantingDate,
@@ -106,7 +109,7 @@ export default function CultivosPage() {
       const newCultivo = await res.json();
       setCultivos((prev) => [newCultivo, ...prev]);
       setShowForm(false);
-      setSelectedSpecies(""); setSelectedVariety(""); setPlantingDate(""); setIsAlreadyPlanted(false);
+      setCultivoName(""); setSelectedSpecies(""); setSelectedVariety(""); setPlantingDate(""); setIsAlreadyPlanted(false);
     } else {
       const d = await res.json();
       setFormError(d.error || "Error al agregar cultivo");
@@ -158,6 +161,13 @@ export default function CultivosPage() {
             >
               <CheckCircle2 size={15} /> Ya está cultivado
             </button>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del cultivo <span className="text-gray-400">(opcional, para identificarlo)</span></label>
+            <input type="text" value={cultivoName} onChange={(e) => setCultivoName(e.target.value)}
+              placeholder="Ej: Tomates del patio, Maíz campo norte"
+              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-green-500" />
           </div>
 
           <div>
@@ -230,7 +240,10 @@ export default function CultivosPage() {
           {cultivos.map((c) => (
             <div key={c.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between card-hover animate-fade-in-up">
               <div>
-                <div className="font-medium text-gray-800 capitalize">{c.species}{c.variety ? ` — ${c.variety}` : ""}</div>
+                <div className="font-medium text-gray-800">
+                  {c.name ? c.name : <span className="capitalize">{c.species}</span>}{c.variety ? ` — ${c.variety}` : ""}
+                  {c.name && <span className="text-gray-400 text-sm ml-2 capitalize">({c.species})</span>}
+                </div>
                 <div className="text-sm text-gray-500 mt-1">
                   {new Date(c.planting_date) > new Date() ? "Siembra planificada" : "Sembrado"}: {new Date(c.planting_date).toLocaleDateString("es-CL")}
                   {c.estimated_harvest_date && ` · Cosecha est.: ${new Date(c.estimated_harvest_date).toLocaleDateString("es-CL")}`}

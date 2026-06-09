@@ -35,6 +35,7 @@ export interface Cultivo {
   id: string;
   tenantId: string;
   parcelaId: string;
+  name: string | null;
   species: string;
   variety: string | null;
   plantingDate: Date;

@@ -58,11 +58,14 @@ export function useNotifications() {
     }
   }, []);
 
-  function scheduleReminder(params: { id: string; taskType: string; parcelaName?: string; scheduledAt: string }) {
+  function scheduleReminder(params: { id: string; taskType: string; parcelaName?: string; cultivoName?: string; scheduledAt: string }) {
     if (Notification.permission !== "granted") return;
     const labels: Record<string, string> = { riego: "💧 Hora de regar", poda: "✂️ Hora de podar", fertilizacion: "🧪 Hora de fertilizar" };
     const title = labels[params.taskType] ?? "Recordatorio agrícola";
-    const body = params.parcelaName ? `Tarea en ${params.parcelaName}` : "Tienes una tarea agrícola pendiente";
+    const bodyParts: string[] = [];
+    if (params.cultivoName) bodyParts.push(`Cultivo: ${params.cultivoName}`);
+    if (params.parcelaName) bodyParts.push(`Parcela: ${params.parcelaName}`);
+    const body = bodyParts.length > 0 ? bodyParts.join(" · ") : "Tienes una tarea agrícola pendiente";
     const delay = new Date(params.scheduledAt).getTime() - Date.now();
     if (delay <= 0) return;
 
