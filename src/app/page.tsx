@@ -8,6 +8,7 @@ import {
   CloudRain, Thermometer, Wind, CheckCircle, ArrowRight,
   Clock, MapPin, Bell, Sprout
 } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // ─── Feature data ────────────────────────────────────────
 const features = [
@@ -44,6 +45,19 @@ const steps = [
   { icon: CheckCircle, title: "Toma decisiones con datos", desc: "Clima actual, historial de suelo y recomendaciones agronómicas en tu celular." },
 ];
 
+// ─── Google Icon ─────────────────────────────────────────
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      <path fill="none" d="M0 0h48v48H0z"/>
+    </svg>
+  );
+}
+
 export default function Home() {
   const router = useRouter();
   const [authPanel, setAuthPanel] = useState<"login" | "register" | null>(null);
@@ -53,6 +67,24 @@ export default function Home() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [registerSuccess, setRegisterSuccess] = useState(false);
+
+  async function handleGoogleLogin() {
+    setError(""); setLoading(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: "https://mvt-agricola-celsov2.vercel.app/auth/confirm",
+        },
+      });
+      if (error) setError(error.message);
+    } catch {
+      setError("Error al conectar con Google");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault(); setError(""); setLoading(true);
@@ -277,6 +309,16 @@ export default function Home() {
                     className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 min-h-[48px]">
                     {loading ? "Ingresando..." : "Ingresar"}
                   </button>
+                  <div className="relative flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-medium">o continúa con</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <button type="button" disabled={loading} onClick={handleGoogleLogin}
+                    className="w-full bg-white border-2 border-green-600 text-gray-700 rounded-xl font-semibold hover:bg-green-50 disabled:opacity-50 min-h-[44px] flex items-center gap-2 justify-center">
+                    <GoogleIcon />
+                    Continuar con Google
+                  </button>
                   <p className="text-center text-sm text-gray-500">
                     ¿Sin cuenta?{" "}
                     <button type="button" onClick={() => openPanel("register")} className="text-green-600 font-semibold hover:underline">Regístrate gratis</button>
@@ -306,6 +348,16 @@ export default function Home() {
                   <button type="submit" disabled={loading}
                     className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 min-h-[48px]">
                     {loading ? "Creando cuenta..." : "Crear Cuenta Gratis"}
+                  </button>
+                  <div className="relative flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-xs text-gray-400 font-medium">o regístrate con</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+                  <button type="button" disabled={loading} onClick={handleGoogleLogin}
+                    className="w-full bg-white border-2 border-green-600 text-gray-700 rounded-xl font-semibold hover:bg-green-50 disabled:opacity-50 min-h-[44px] flex items-center gap-2 justify-center">
+                    <GoogleIcon />
+                    Continuar con Google
                   </button>
                   <p className="text-center text-sm text-gray-500">
                     ¿Ya tienes cuenta?{" "}

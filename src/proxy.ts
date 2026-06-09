@@ -4,14 +4,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
-  // Manejar callback de confirmación de email (?code=xxx)
-  const code = request.nextUrl.searchParams.get('code');
-  if (code && request.nextUrl.pathname === '/') {
-    const confirmUrl = new URL('/auth/confirm', request.url);
-    confirmUrl.searchParams.set('code', code);
-    return NextResponse.redirect(confirmUrl);
-  }
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -33,16 +25,20 @@ export async function proxy(request: NextRequest) {
     }
   );
 
+  // Always call getUser() to refresh the session cookie if needed
   const { data: { user } } = await supabase.auth.getUser();
 
+  const { pathname, searchParams } = request.nextUrl;
+
   // Rutas protegidas: redirigir a login si no hay sesión
-  const isProtectedRoute = request.nextUrl.pathname.startsWith('/dashboard') ||
-    request.nextUrl.pathname.startsWith('/parcelas') ||
-    request.nextUrl.pathname.startsWith('/cultivos') ||
-    request.nextUrl.pathname.startsWith('/alertas') ||
-    request.nextUrl.pathname.startsWith('/recordatorios') ||
-    request.nextUrl.pathname.startsWith('/recomendaciones') ||
-    request.nextUrl.pathname.startsWith('/suelo');
+  const isProtectedRoute =
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/parcelas') ||
+    pathname.startsWith('/cultivos') ||
+    pathname.startsWith('/alertas') ||
+    pathname.startsWith('/recordatorios') ||
+    pathname.startsWith('/recomendaciones') ||
+    pathname.startsWith('/suelo');
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
@@ -50,14 +46,23 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Si ya está autenticado y va a login/register, redirigir al dashboard
-  const isAuthRoute = request.nextUrl.pathname === '/login' ||
-    request.nextUrl.pathname === '/register';
+  // Si ya está autenticado y va a login/register, redirigir al dashboard.
+  // EXCEPCIÓN: no redirigir si hay un ?code= en la URL (OAuth / email confirm callback).
+  const isAuthRoute = pathname === '/login' || pathname === '/register';
+  const hasCode = searchParams.has('code');
 
-  if (isAuthRoute && user) {
+  if (isAuthRoute && user && !hasCode) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
+  }
+
+  // Redirigir ?code= en la raíz (/) al handler de confirmación
+  const code = searchParams.get('code');
+  if (code && pathname === '/') {
+    const confirmUrl = new URL('/auth/confirm', request.url);
+    confirmUrl.searchParams.set('code', code);
+    return NextResponse.redirect(confirmUrl);
   }
 
   return supabaseResponse;

@@ -2,96 +2,76 @@
 
 import { useEffect, useRef } from "react";
 
-let swRegistration: ServiceWorkerRegistration | null = null;
+let swReg: ServiceWorkerRegistration | null = null;
 
-/**
- * Registra el Service Worker y expone funciones para programar
- * notificaciones locales de recordatorios.
- */
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!("serviceWorker" in navigator) || !("Notification" in window)) return null;
+  if (Notification.permission !== "granted") return null;
+  try {
+    swReg = await navigator.serviceWorker.register("/sw.js");
+    return swReg;
+  } catch { return null; }
+}
+
+export async function subscribeToPush(): Promise<PushSubscription | null> {
+  const reg = swReg ?? await registerServiceWorker();
+  if (!reg) return null;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!pub) return null;
+  try {
+    const existing = await reg.pushManager.getSubscription();
+    if (existing) return existing;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(pub).buffer as ArrayBuffer,
+    });
+    // Guardar en BD
+    await fetch("/api/push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ endpoint: sub.endpoint, keys: { p256dh: arrayBufferToBase64(sub.getKey("p256dh")), auth: arrayBufferToBase64(sub.getKey("auth")) } }),
+    });
+    return sub;
+  } catch { return null; }
+}
+
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
+}
+
+function arrayBufferToBase64(buf: ArrayBuffer | null): string {
+  if (!buf) return "";
+  return btoa(String.fromCharCode(...new Uint8Array(buf)));
+}
+
 export function useNotifications() {
   const ready = useRef(false);
 
   useEffect(() => {
     if (ready.current) return;
     ready.current = true;
-
-    if (!("serviceWorker" in navigator) || !("Notification" in window)) return;
-    if (Notification.permission !== "granted") return;
-
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then((reg) => { swRegistration = reg; })
-      .catch(console.error);
+    if (Notification.permission === "granted") {
+      registerServiceWorker().then(() => subscribeToPush());
+    }
   }, []);
 
-  /**
-   * Programa una notificación local para un recordatorio.
-   * Funciona aunque la app esté en segundo plano (via SW).
-   */
-  function scheduleReminder(params: {
-    id: string;
-    taskType: string;
-    parcelaName?: string;
-    scheduledAt: string; // ISO datetime
-  }) {
+  function scheduleReminder(params: { id: string; taskType: string; parcelaName?: string; scheduledAt: string }) {
     if (Notification.permission !== "granted") return;
-
-    const labels: Record<string, string> = {
-      riego: "💧 Hora de regar",
-      poda: "✂️ Hora de podar",
-      fertilizacion: "🧪 Hora de fertilizar",
-    };
-
+    const labels: Record<string, string> = { riego: "💧 Hora de regar", poda: "✂️ Hora de podar", fertilizacion: "🧪 Hora de fertilizar" };
     const title = labels[params.taskType] ?? "Recordatorio agrícola";
-    const body = params.parcelaName
-      ? `Tarea pendiente en ${params.parcelaName}`
-      : "Tienes una tarea agrícola pendiente";
-
+    const body = params.parcelaName ? `Tarea en ${params.parcelaName}` : "Tienes una tarea agrícola pendiente";
     const delay = new Date(params.scheduledAt).getTime() - Date.now();
     if (delay <= 0) return;
 
-    // Si el SW está registrado, le mandamos el mensaje
-    if (swRegistration?.active) {
-      swRegistration.active.postMessage({
-        type: "SCHEDULE_NOTIFICATION",
-        id: params.id,
-        title,
-        body,
-        scheduledAt: params.scheduledAt,
-      });
-      return;
-    }
+    swReg?.active?.postMessage({ type: "SCHEDULE_NOTIFICATION", id: params.id, title, body, scheduledAt: params.scheduledAt });
 
-    // Fallback: usar el Notification API directamente cuando la app está abierta
-    if (delay < 24 * 60 * 60 * 1000) { // solo si es en menos de 24h
-      setTimeout(() => {
-        if (Notification.permission === "granted") {
-          new Notification(title, {
-            body,
-            icon: "/assets/logo_principal.png",
-            tag: params.id,
-          });
-        }
-      }, delay);
+    if (!swReg && delay < 24 * 3600 * 1000) {
+      setTimeout(() => { new Notification(title, { body, icon: "/assets/logo_principal.png", tag: params.id }); }, delay);
     }
   }
 
-  function cancelReminder(id: string) {
-    swRegistration?.active?.postMessage({ type: "CANCEL_NOTIFICATION", id });
-  }
-
-  return { scheduleReminder, cancelReminder };
-}
-
-/**
- * Registra el SW al cargar la app (llamar en el layout o dashboard).
- */
-export async function registerServiceWorker() {
-  if (!("serviceWorker" in navigator) || !("Notification" in window)) return;
-  if (Notification.permission !== "granted") return;
-  try {
-    swRegistration = await navigator.serviceWorker.register("/sw.js");
-  } catch (e) {
-    console.error("SW registration failed:", e);
-  }
+  return { scheduleReminder };
 }

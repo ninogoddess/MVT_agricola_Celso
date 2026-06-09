@@ -6,7 +6,7 @@ import {
   MonitorSmartphone, Home, EyeOff
 } from "lucide-react";
 import { useBannerState } from "@/hooks/useBannerState";
-import { registerServiceWorker } from "@/hooks/useNotifications";
+import { registerServiceWorker, subscribeToPush } from "@/hooks/useNotifications";
 
 // ─── Tutorial Android Modal ─────────────────────────────────────
 const NOTIF_STEPS = [
@@ -80,8 +80,8 @@ export function NotificationBanner() {
     const r = await Notification.requestPermission();
     setPermission(r);
     if (r === "granted") {
-      // Registrar SW para que las notificaciones funcionen en background
       await registerServiceWorker();
+      await subscribeToPush();
     }
   }
 
@@ -217,7 +217,10 @@ export function NotificationStatus() {
   async function request() {
     const r = await Notification.requestPermission();
     setPermission(r);
-    if (r === "granted") await registerServiceWorker();
+    if (r === "granted") {
+      await registerServiceWorker();
+      await subscribeToPush();
+    }
   }
 
   const isGranted = permission === "granted";
