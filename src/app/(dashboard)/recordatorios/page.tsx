@@ -27,6 +27,7 @@ interface Cultivo {
   species: string;
   variety: string | null;
   parcela_id: string;
+  status?: string;
 }
 
 export default function RecordatoriosPage() {
@@ -68,7 +69,7 @@ export default function RecordatoriosPage() {
 
   // Cultivos filtrados por parcela seleccionada
   const cultivosFiltrados = formData.parcelaId 
-    ? cultivos.filter((c) => c.parcela_id === formData.parcelaId && c.status !== 'harvested' && c.status !== 'lost')
+    ? cultivos.filter((c) => c.parcela_id === formData.parcelaId && (c.status === undefined || (c.status !== 'harvested' && c.status !== 'lost')))
     : [];
 
   async function markComplete(id: string) {
