@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2 } from "lucide-react";
 import { NotificationBanner } from "@/components/ui/AppBanners";
+import { useNotifications } from "@/hooks/useNotifications";
 
 interface Reminder {
   id: string;
@@ -27,6 +28,7 @@ export default function RecordatoriosPage() {
   const [tab, setTab] = useState<"pending" | "completed">("pending");
   const [formData, setFormData] = useState({ parcelaId: "", taskType: "", scheduledAt: "" });
   const [formError, setFormError] = useState("");
+  const { scheduleReminder } = useNotifications();
 
   useEffect(() => {
     Promise.all([
@@ -70,6 +72,16 @@ export default function RecordatoriosPage() {
     if (res.ok) {
       const newReminder = await res.json();
       setReminders((prev) => [newReminder, ...prev]);
+
+      // Programar notificación local en el dispositivo
+      const parcela = parcelas.find((p) => p.id === formData.parcelaId);
+      scheduleReminder({
+        id: newReminder.id,
+        taskType: formData.taskType,
+        parcelaName: parcela?.name,
+        scheduledAt: formData.scheduledAt,
+      });
+
       setShowForm(false);
       setFormData({ parcelaId: "", taskType: "", scheduledAt: "" });
     } else {

@@ -1,32 +1,30 @@
 import { ImageResponse } from "next/og";
 
-export const size = { width: 32, height: 32 };
+export const size = { width: 64, height: 64 };
 export const contentType = "image/png";
 
-export default function Icon() {
+// Carga la imagen y la recorta en círculo usando un clipPath SVG
+export default async function Icon() {
+  const imageUrl = "https://mvt-agricola-celsov2.vercel.app/assets/logo_principal.png";
+
   return new ImageResponse(
     (
       <div
         style={{
-          width: 32,
-          height: 32,
-          borderRadius: "50%",
+          width: 64,
+          height: 64,
+          borderRadius: 32,
           overflow: "hidden",
           display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="https://mvt-agricola-celsov2.vercel.app/assets/logo_principal.png"
-          width={32}
-          height={32}
-          style={{ objectFit: "cover", borderRadius: "50%" }}
-          alt=""
-        />
+        <img src={imageUrl} width={64} height={64} style={{ objectFit: "cover" }} alt="" />
       </div>
     ),
-    { ...size }
+    {
+      width: 64,
+      height: 64,
+    }
   );
 }
