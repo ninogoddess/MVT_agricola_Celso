@@ -75,7 +75,7 @@ export default function Home() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://mvt-agricola-celsov2.vercel.app/auth/confirm",
+          redirectTo: `${window.location.origin}/auth/confirm`,
         },
       });
       if (error) setError(error.message);

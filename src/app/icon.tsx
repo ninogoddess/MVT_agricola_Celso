@@ -5,7 +5,7 @@ export const contentType = "image/png";
 
 // Carga la imagen y la recorta en círculo usando un clipPath SVG
 export default async function Icon() {
-  const imageUrl = "https://mvt-agricola-celsov2.vercel.app/assets/logo_principal.png";
+  const imageUrl = "https://afrencia.vercel.app/assets/logo_principal.png";
 
   return new ImageResponse(
     (
