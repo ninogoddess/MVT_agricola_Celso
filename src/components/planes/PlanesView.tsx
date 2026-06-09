@@ -41,7 +41,7 @@ const PLANS: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "$990",
+    price: "$1990",
     priceNote: "CLP / mes",
     icon: Zap,
     color: "text-green-700",
@@ -62,7 +62,7 @@ const PLANS: Plan[] = [
   },
   {
     id: "organizacion",
-    name: "Organización",
+    name: "Institucional",
     price: "$9.990",
     priceNote: "CLP / mes",
     icon: Building2,
@@ -80,7 +80,7 @@ const PLANS: Plan[] = [
       "Exportación y reportes",
       "Soporte dedicado",
     ],
-    cta: "Elegir Organización",
+    cta: "Próximamente",
   },
 ];
 
@@ -117,6 +117,7 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
             const Icon = plan.icon;
             const isCurrent = plan.id === currentPlan;
             const isSelected = selected === plan.id;
+            const isComingSoon = plan.id === "organizacion";
 
             return (
               <div key={plan.id}
@@ -124,13 +125,21 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
                   plan.popular
                     ? "border-green-400 shadow-lg shadow-green-100"
                     : plan.borderColor
-                } ${isCurrent ? "ring-2 ring-offset-2 ring-green-500" : ""}`}>
+                } ${isCurrent ? "ring-2 ring-offset-2 ring-green-500" : ""} ${isComingSoon ? "opacity-60 grayscale-[30%] pointer-events-none" : ""}`}>
 
-                {/* Popular badge */}
-                {plan.popular && (
+                {/* Popular / Próximamente badge */}
+                {plan.popular && !isComingSoon && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                       Más popular
+                    </span>
+                  </div>
+                )}
+                
+                {isComingSoon && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <span className="bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full">
+                      Próximamente
                     </span>
                   </div>
                 )}
@@ -168,10 +177,10 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
 
                 {/* CTA */}
                 <button
-                  onClick={() => { if (!isCurrent) setSelected(plan.id); }}
-                  disabled={isCurrent}
+                  onClick={() => { if (!isCurrent && !isComingSoon) setSelected(plan.id); }}
+                  disabled={isCurrent || isComingSoon}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-2 ${
-                    isCurrent
+                    isCurrent || isComingSoon
                       ? "bg-gray-100 text-gray-400 cursor-default"
                       : plan.popular
                       ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
@@ -179,7 +188,7 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
                   }`}
                 >
                   {isCurrent ? "Plan actual" : plan.cta}
-                  {!isCurrent && <ArrowRight size={15} />}
+                  {!isCurrent && !isComingSoon && <ArrowRight size={15} />}
                 </button>
               </div>
             );
