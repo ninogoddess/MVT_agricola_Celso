@@ -1,4 +1,4 @@
-// Service Worker - AgroInteligencia
+// Service Worker - agrencia
 // Maneja notificaciones push VAPID reales
 
 self.addEventListener("install", () => self.skipWaiting());
@@ -6,7 +6,7 @@ self.addEventListener("activate", (e) => e.waitUntil(clients.claim()));
 
 // Push real desde servidor (VAPID)
 self.addEventListener("push", (event) => {
-  let data = { title: "AgroInteligencia", body: "Tienes una tarea pendiente", url: "/recordatorios", icon: "/assets/logo_principal.png" };
+  let data = { title: "agrencia", body: "Tienes una tarea pendiente", url: "/recordatorios", icon: "/assets/logo_principal.png" };
   try { if (event.data) data = { ...data, ...event.data.json() }; } catch {}
 
   event.waitUntil(

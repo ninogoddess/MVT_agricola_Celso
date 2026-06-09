@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, Trash2, Smartphone } from "lucide-react";
+import { AlertTriangle, Trash2, Smartphone, CreditCard, Sprout, ArrowRight } from "lucide-react";
 import { NotificationStatus, InstallAppStatus } from "@/components/ui/AppBanners";
+import PlanesView from "@/components/planes/PlanesView";
 
 export default function AjustesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
+  const [showPlanes, setShowPlanes] = useState(false);
 
   async function handleDeleteAccount() {
     if (deleteInput !== "ELIMINAR") {
@@ -34,6 +36,29 @@ export default function AjustesPage() {
   return (
     <div className="max-w-lg mx-auto space-y-6 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Ajustes</h1>
+
+      {/* ── Plan actual ── */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+          <CreditCard size={14} /> Tu plan
+        </h2>
+        <div className="bg-white rounded-2xl border border-gray-200 p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+              <Sprout size={18} className="text-gray-500" />
+            </div>
+            <div>
+              <p className="font-semibold text-gray-800 text-sm">Plan Gratis</p>
+              <p className="text-xs text-gray-500 mt-0.5">1 parcela · 3 cultivos · 6 recordatorios</p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowPlanes(true)}
+            className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 min-h-[40px] flex items-center gap-1.5">
+            Actualizar <ArrowRight size={14} />
+          </button>
+        </div>
+      </section>
 
       {/* ── Dispositivo móvil ── */}
       <section className="space-y-3">
@@ -96,6 +121,15 @@ export default function AjustesPage() {
           )}
         </div>
       </section>
+
+      {/* Modal de planes */}
+      {showPlanes && (
+        <PlanesView
+          currentPlan="gratis"
+          modal
+          onClose={() => setShowPlanes(false)}
+        />
+      )}
     </div>
   );
 }

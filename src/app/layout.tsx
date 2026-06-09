@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AgroInteligencia — Gestión inteligente de cosechas",
+  title: "Agrencia — Gestión inteligente de cosechas",
   description: "Plataforma agrícola con clima en tiempo real, recomendaciones de siembra y cosecha, y recordatorios automáticos para productores de Chile.",
   icons: {
     icon: [{ url: "/assets/logo_principal.png", type: "image/png", sizes: "any" }],

@@ -31,7 +31,7 @@ function LocationBadge({ lat, lon }: { lat: number; lon: number }) {
   useEffect(() => {
     fetch(
       `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
-      { headers: { "User-Agent": "AgroInteligencia/1.0" } }
+      { headers: { "User-Agent": "Agrencia/1.0" } }
     )
       .then((r) => r.json())
       .then((d) => {

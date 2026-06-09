@@ -59,11 +59,11 @@ export default function RegisterPage() {
       <div className="max-w-sm w-full space-y-6">
         <div className="text-center">
           <div className="relative w-16 h-16 mx-auto mb-3">
-            <Image src="/assets/logo_principal.png" alt="AgroInteligencia" fill className="object-contain"
+            <Image src="/assets/logo_principal.png" alt="Agrencia" fill className="object-contain"
               onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
           </div>
           <h1 className="text-2xl font-bold text-green-800">Crear Cuenta</h1>
-          <p className="text-gray-500 text-sm mt-1">Registra tu organización agrícola en AgroInteligencia</p>
+          <p className="text-gray-500 text-sm mt-1">Registra tu organización agrícola en Agrencia</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">

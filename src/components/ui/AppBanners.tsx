@@ -22,7 +22,7 @@ const INSTALL_STEPS = [
   { step: 1, text: 'En Chrome Android, toca los 3 puntos (⋮) arriba a la derecha.' },
   { step: 2, text: '"Añadir a pantalla de inicio" o "Instalar aplicación".' },
   { step: 3, text: 'Confirma tocando "Añadir".' },
-  { step: 4, text: 'El ícono de AgroInteligencia aparecerá en tu pantalla de inicio.' },
+  { step: 4, text: 'El ícono de Agrencia aparecerá en tu pantalla de inicio.' },
   { step: 5, text: 'En iPhone: toca el botón Compartir (□↑) en Safari y elige "Añadir a pantalla de inicio".' },
 ];
 
@@ -171,7 +171,7 @@ export function InstallAppBanner() {
         <div className="flex items-start gap-3">
           <MonitorSmartphone size={20} className="text-green-600 flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-green-800 text-sm">Agrega AgroInteligencia a tu pantalla de inicio</p>
+            <p className="font-semibold text-green-800 text-sm">Agrega Agrencia a tu pantalla de inicio</p>
             <p className="text-green-700 text-xs mt-0.5">
               Accede con un solo toque, como una app nativa. Sin tienda, sin instalación lenta. Siempre a mano en tu celular.
             </p>

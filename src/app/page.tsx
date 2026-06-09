@@ -133,7 +133,7 @@ export default function Home() {
               <Image src="/assets/logo_principal.png" alt="" fill className="object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
             </div>
-            <span className="font-bold text-green-800 text-lg tracking-tight">AgroInteligencia</span>
+            <span className="font-bold text-green-800 text-lg tracking-tight">Agrencia</span>
           </div>
           <button onClick={() => openPanel("login")}
             className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 text-sm min-h-[40px] shadow-sm">
@@ -155,7 +155,7 @@ export default function Home() {
               Cultiva con inteligencia,<br />cosecha con certeza
             </h1>
             <p className="text-green-100 text-lg leading-relaxed max-w-xl">
-              Deja de adivinar cuándo regar, sembrar o cosechar. AgroInteligencia centraliza el clima,
+              Deja de adivinar cuándo regar, sembrar o cosechar. Agrencia centraliza el clima,
               el estado de tu suelo y los ciclos de tus cultivos para que tomes decisiones basadas en datos,
               no en intuición.
             </p>
@@ -209,7 +209,7 @@ export default function Home() {
             ))}
           </div>
           <p className="mt-10 text-green-700 font-semibold text-lg">
-            AgroInteligencia responde todas esas preguntas automáticamente.
+            Agrencia responde todas esas preguntas automáticamente.
           </p>
         </div>
       </section>

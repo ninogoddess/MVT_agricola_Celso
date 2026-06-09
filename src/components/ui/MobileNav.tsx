@@ -22,7 +22,7 @@ function Logo({ size = 32 }: { size?: number }) {
     <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
       <Image
         src="/assets/logo_principal.png"
-        alt="AgroInteligencia"
+        alt="Agrencia"
         fill
         className="object-contain"
         onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
@@ -46,7 +46,7 @@ export default function MobileNav() {
       <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
         <Link href="/dashboard" className="flex items-center gap-2">
           <Logo size={32} />
-          <span className="font-bold text-green-800">AgroInteligencia</span>
+          <span className="font-bold text-green-800">Agrencia</span>
         </Link>
         <button onClick={() => setOpen(!open)}
           className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-gray-100"
@@ -84,7 +84,7 @@ export default function MobileNav() {
         <div className="p-4 border-b border-gray-200">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Logo size={36} />
-            <span className="font-bold text-green-800 text-lg">AgroInteligencia</span>
+            <span className="font-bold text-green-800 text-lg">Agrencia</span>
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
