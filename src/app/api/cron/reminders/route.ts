@@ -3,11 +3,15 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 import { ReminderService } from '@/lib/services/reminder.service';
 import webpush from 'web-push';
 
-webpush.setVapidDetails(
-  process.env.VAPID_EMAIL!,
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+export const runtime = 'nodejs'; // web-push requiere Node.js, no edge runtime
+
+if (process.env.VAPID_EMAIL && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    process.env.VAPID_EMAIL,
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
