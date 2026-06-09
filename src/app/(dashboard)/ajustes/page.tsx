@@ -34,7 +34,7 @@ export default function AjustesPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto space-y-6 animate-fade-in-up">
+    <div className="space-y-6 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Ajustes</h1>
 
       {/* ── Plan actual ── */}
