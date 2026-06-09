@@ -94,14 +94,14 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
   const [selected, setSelected] = useState<string | null>(null);
 
   return (
-    <div className={modal ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in" : ""}>
-      <div className={modal ? "bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90dvh] overflow-y-auto animate-scale-in" : "space-y-6"}>
+    <div className={modal ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in" : "w-full"}>
+      <div className={modal ? "bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90dvh] overflow-y-auto animate-scale-in" : "space-y-6 w-full max-w-6xl mx-auto"}>
 
         {/* Header */}
         <div className={`${modal ? "p-6 border-b border-gray-100 sticky top-0 bg-white z-10" : ""} flex items-center justify-between`}>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Planes de Agrencia</h2>
-            <p className="text-gray-500 text-sm mt-0.5">Elige el plan que mejor se adapta a tu campo</p>
+            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900">Planes de Agrencia</h2>
+            <p className="text-gray-500 text-sm lg:text-base mt-0.5">Elige el plan que mejor se adapta a tu campo</p>
           </div>
           {modal && onClose && (
             <button onClick={onClose}
@@ -112,7 +112,7 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
         </div>
 
         {/* Cards */}
-        <div className={`${modal ? "p-6" : ""} grid grid-cols-1 md:grid-cols-3 gap-5`}>
+        <div className={`${modal ? "p-6" : ""} grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8`}>
           {PLANS.map((plan) => {
             const Icon = plan.icon;
             const isCurrent = plan.id === currentPlan;
