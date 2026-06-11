@@ -141,7 +141,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
           {PLANS.map((plan) => {
             const Icon = plan.icon;
             const isCurrent = plan.id === currentPlan;
-            const isComingSoon = false; // Removido coming soon para permitir pagos de todos
+            const isComingSoon = plan.id === "organizacion";
 
             return (
               <div key={plan.id}
@@ -193,18 +193,18 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
 
                 {/* CTA */}
                 <button
-                  onClick={() => { if (!isCurrent) handleUpgrade(plan.id); }}
-                  disabled={isCurrent || loadingPlan !== null}
+                  onClick={() => { if (!isCurrent && !isComingSoon) handleUpgrade(plan.id); }}
+                  disabled={isCurrent || loadingPlan !== null || isComingSoon}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-2 ${
-                    isCurrent
+                    isCurrent || isComingSoon
                       ? "bg-gray-100 text-gray-400 cursor-default"
                       : plan.popular
                       ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
                       : `${plan.bgColor} ${plan.color} border-2 ${plan.borderColor} hover:opacity-80`
                   }`}
                 >
-                  {loadingPlan === plan.id ? <Loader2 size={16} className="animate-spin" /> : isCurrent ? "Plan actual" : plan.cta}
-                  {!isCurrent && loadingPlan !== plan.id && <ArrowRight size={15} />}
+                  {loadingPlan === plan.id ? <Loader2 size={16} className="animate-spin" /> : isCurrent ? "Plan actual" : isComingSoon ? "Próximamente" : plan.cta}
+                  {!isCurrent && !isComingSoon && loadingPlan !== plan.id && <ArrowRight size={15} />}
                 </button>
               </div>
             );

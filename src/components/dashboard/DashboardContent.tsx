@@ -54,10 +54,10 @@ export default function DashboardContent() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in-up-2">
-        <SummaryCard icon={Map} label="Parcelas" value={data.summary.activeParcelas} />
-        <SummaryCard icon={Sprout} label="Cultivos" value={data.summary.activeCultivos} />
-        <SummaryCard icon={Bell} label="Alertas" value={data.summary.pendingAlerts} color="red" />
-        <SummaryCard icon={CalendarCheck} label="Recordatorios" value={data.summary.upcomingReminders} color="amber" />
+        <SummaryCard icon={Map} label="Parcelas" value={data.summary.activeParcelas} href="/parcelas" />
+        <SummaryCard icon={Sprout} label="Cultivos" value={data.summary.activeCultivos} href="/cultivos" />
+        <SummaryCard icon={Bell} label="Alertas" value={data.summary.pendingAlerts} color="red" href="/alertas" />
+        <SummaryCard icon={CalendarCheck} label="Recordatorios" value={data.summary.upcomingReminders} color="amber" href="/recordatorios" />
       </div>
 
       {/* Alerts banner */}
@@ -79,14 +79,16 @@ export default function DashboardContent() {
       )}
 
       {/* Upcoming reminders */}
-      {data.upcomingReminders.length > 0 && (
+      {data.upcomingReminders.filter(r => new Date(r.scheduled_at).getTime() >= Date.now()).length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
           <div className="flex items-center gap-2 font-semibold text-amber-800 mb-2">
             <CalendarCheck size={16} />
             Próximos Recordatorios
           </div>
           <ul className="space-y-2">
-            {data.upcomingReminders.map((reminder) => (
+            {data.upcomingReminders
+              .filter(r => new Date(r.scheduled_at).getTime() >= Date.now())
+              .map((reminder) => (
               <li key={reminder.id} className="text-sm text-amber-700 flex justify-between items-center">
                 <span className="flex items-center gap-1.5">
                   {taskIcon(reminder.task_type)}
@@ -135,19 +137,24 @@ export default function DashboardContent() {
 
 import type { LucideIcon } from "lucide-react";
 
-function SummaryCard({ icon: Icon, label, value, color }: { icon: LucideIcon; label: string; value: number; color?: string }) {
+function SummaryCard({ icon: Icon, label, value, color, href }: { icon: LucideIcon; label: string; value: number; color?: string; href?: string }) {
   const colorClasses = color === "red" ? "bg-red-50 border-red-200"
     : color === "amber" ? "bg-amber-50 border-amber-200"
     : "bg-white border-gray-200";
   const iconColor = color === "red" ? "text-red-500" : color === "amber" ? "text-amber-500" : "text-green-600";
 
-  return (
-    <div className={`rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colorClasses}`}>
+  const content = (
+    <div className={`rounded-xl border p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${colorClasses} h-full`}>
       <Icon size={22} className={`${iconColor} mb-2`} />
       <div className="text-2xl font-bold text-gray-800">{value}</div>
       <div className="text-sm text-gray-500">{label}</div>
     </div>
   );
+
+  if (href) {
+    return <a href={href} className="block h-full">{content}</a>;
+  }
+  return content;
 }
 
 function taskIcon(type: string) {

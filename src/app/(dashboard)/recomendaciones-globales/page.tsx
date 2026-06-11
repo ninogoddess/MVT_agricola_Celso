@@ -129,14 +129,14 @@ function RecoCard({ rec, index }: { rec: Recommendation; index: number }) {
           )}
 
           {/* Footer: parcela + clima */}
-          <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-gray-100">
-            <span className="flex items-center gap-1 text-xs text-gray-400">
-              <MapPin size={11} /> {rec.parcelaName}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 mt-2 border-t border-gray-100">
+            <span className="flex items-center gap-1.5 text-sm font-bold text-gray-700 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-200">
+              <MapPin size={16} className="text-green-600" /> Parcela: {rec.parcelaName}
             </span>
-            <div className="flex gap-3 text-xs text-gray-400">
-              <span className="flex items-center gap-0.5"><Thermometer size={11} />{rec.climate.temp}°C</span>
-              <span className="flex items-center gap-0.5"><Droplets size={11} />{rec.climate.humidity}%</span>
-              <span className="flex items-center gap-0.5"><CloudRain size={11} />{rec.climate.precipProb}%</span>
+            <div className="flex gap-4 text-sm font-medium text-gray-700 bg-blue-50/50 px-3 py-1.5 rounded-lg border border-blue-100">
+              <span className="flex items-center gap-1.5" title="Temperatura"><Thermometer size={16} className="text-red-500" />{rec.climate.temp}°C</span>
+              <span className="flex items-center gap-1.5" title="Humedad"><Droplets size={16} className="text-blue-500" />{rec.climate.humidity}%</span>
+              <span className="flex items-center gap-1.5" title="Probabilidad de lluvia"><CloudRain size={16} className="text-cyan-500" />{rec.climate.precipProb}%</span>
             </div>
           </div>
         </div>

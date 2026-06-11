@@ -76,8 +76,17 @@ export default function NewParcelaPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex flex-col gap-2">
+            <p>{error}</p>
+            {error.toLowerCase().includes('límite') && (
+              <button
+                type="button"
+                onClick={() => router.push('/planes')}
+                className="mt-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 w-fit transition-colors"
+              >
+                Ver planes y mejorar
+              </button>
+            )}
           </div>
         )}
 
@@ -90,30 +99,34 @@ export default function NewParcelaPage() {
 
         {/* Ubicación */}
         <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className="block text-sm font-medium text-gray-700">Ubicación</label>
-            <button
-              type="button"
-              onClick={useMyLocation}
-              disabled={geoLoading}
-              className="text-sm text-green-600 font-medium hover:text-green-700 disabled:opacity-50 flex items-center gap-1 min-h-[44px] px-2"
-            >
-              <Locate size={15} /> {geoLoading ? "Obteniendo..." : "Usar mi ubicación"}
-            </button>
-          </div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Ubicación</label>
+          <button
+            type="button"
+            onClick={useMyLocation}
+            disabled={geoLoading}
+            className="w-full py-3 px-4 bg-gray-50 border-2 border-dashed border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-100 hover:border-green-400 hover:text-green-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2 min-h-[44px] mb-4"
+          >
+            <Locate size={18} className={geoLoading ? "animate-pulse" : ""} /> 
+            {geoLoading ? "Obteniendo coordenadas GPS..." : "Obtener mi ubicación actual"}
+          </button>
+          
           <div className="grid grid-cols-2 gap-3">
             <div>
               <input id="lat" type="number" step="any" value={latitude} onChange={(e) => setLatitude(e.target.value)} required
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                placeholder="Latitud (-33.45)" />
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-gray-50 text-gray-600"
+                placeholder="Latitud (-33.45)" readOnly={latitude !== ""} />
             </div>
             <div>
               <input id="lng" type="number" step="any" value={longitude} onChange={(e) => setLongitude(e.target.value)} required
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
-                placeholder="Longitud (-70.66)" />
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none bg-gray-50 text-gray-600"
+                placeholder="Longitud (-70.66)" readOnly={longitude !== ""} />
             </div>
           </div>
-          <p className="text-xs text-gray-400 mt-1">Usa el botón para detectar automáticamente o ingresa las coordenadas manualmente.</p>
+          {latitude && longitude && (
+            <p className="text-sm text-green-600 font-medium mt-2 flex items-center gap-1 bg-green-50 p-2 rounded-lg border border-green-200">
+              <MapPin size={16} /> ¡Ubicación capturada con éxito!
+            </p>
+          )}
         </div>
 
         <div>
