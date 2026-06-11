@@ -5,9 +5,12 @@ import { TenantAccessError, ResourceNotFoundError } from '@/lib/utils/errors';
 import { computeIrrigationDate, computePruningDate, computeFertilizationDate } from '@/lib/utils/reminder-engine';
 import type { CreateReminderInput } from '@/lib/validators/reminder.schema';
 
+import { SubscriptionService } from '@/lib/services/subscription.service';
+
 export class ReminderService {
   private repo: ReminderRepository;
   private parcelaRepo: ParcelaRepository;
+  private subscriptionService: SubscriptionService;
   private supabase: SupabaseClient;
   private tenantId: string;
 
@@ -16,6 +19,7 @@ export class ReminderService {
     this.tenantId = tenantId;
     this.repo = new ReminderRepository(supabase, tenantId);
     this.parcelaRepo = new ParcelaRepository(supabase, tenantId);
+    this.subscriptionService = new SubscriptionService(supabase, tenantId);
   }
 
   async list(filters?: { status?: string; parcelaId?: string; from?: string; to?: string }) {
@@ -23,6 +27,8 @@ export class ReminderService {
   }
 
   async createManual(input: CreateReminderInput) {
+    await this.subscriptionService.checkReminderLimit();
+
     // Verificar ownership de parcela
     const parcelaExists = await this.parcelaRepo.verifyOwnership(input.parcelaId);
     if (!parcelaExists) throw new TenantAccessError();

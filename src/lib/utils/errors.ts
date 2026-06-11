@@ -41,6 +41,17 @@ export class CropParametersNotFoundError extends AppError {
   }
 }
 
+export class LimitExceededError extends AppError {
+  constructor(resource: string) {
+    super(
+      `Has alcanzado el límite de ${resource} permitidos en tu plan actual. Mejora tu plan para continuar creciendo.`,
+      403,
+      'LIMIT_EXCEEDED'
+    );
+    this.name = 'LimitExceededError';
+  }
+}
+
 export function toErrorResponse(error: unknown) {
   if (error instanceof ValidationError) {
     return {

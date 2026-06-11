@@ -3,11 +3,15 @@ import { ParcelaRepository } from '@/lib/repositories/parcela.repository';
 import { ResourceNotFoundError, ValidationError } from '@/lib/utils/errors';
 import type { CreateParcelaInput, UpdateParcelaInput } from '@/lib/validators/parcela.schema';
 
+import { SubscriptionService } from '@/lib/services/subscription.service';
+
 export class ParcelaService {
   private repo: ParcelaRepository;
+  private subscriptionService: SubscriptionService;
 
   constructor(supabase: SupabaseClient, tenantId: string) {
     this.repo = new ParcelaRepository(supabase, tenantId);
+    this.subscriptionService = new SubscriptionService(supabase, tenantId);
   }
 
   async list(activeOnly = true) {
@@ -21,6 +25,8 @@ export class ParcelaService {
   }
 
   async create(input: CreateParcelaInput) {
+    await this.subscriptionService.checkPlotLimit();
+
     const { data, error } = await this.repo.create({
       name: input.name,
       latitude: input.latitude,

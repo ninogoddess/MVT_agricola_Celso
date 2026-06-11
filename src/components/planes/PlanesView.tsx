@@ -41,7 +41,7 @@ const PLANS: Plan[] = [
   {
     id: "pro",
     name: "Pro",
-    price: "$1990",
+    price: "$2990",
     priceNote: "CLP / mes",
     icon: Zap,
     color: "text-green-700",

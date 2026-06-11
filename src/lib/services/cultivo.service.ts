@@ -4,13 +4,17 @@ import { ParcelaRepository } from '@/lib/repositories/parcela.repository';
 import { ResourceNotFoundError, TenantAccessError } from '@/lib/utils/errors';
 import type { CreateCultivoInput, UpdateCultivoStatusInput } from '@/lib/validators/cultivo.schema';
 
+import { SubscriptionService } from '@/lib/services/subscription.service';
+
 export class CultivoService {
   private repo: CultivoRepository;
   private parcelaRepo: ParcelaRepository;
+  private subscriptionService: SubscriptionService;
 
   constructor(supabase: SupabaseClient, tenantId: string) {
     this.repo = new CultivoRepository(supabase, tenantId);
     this.parcelaRepo = new ParcelaRepository(supabase, tenantId);
+    this.subscriptionService = new SubscriptionService(supabase, tenantId);
   }
 
   async listByParcela(parcelaId: string) {
@@ -23,6 +27,8 @@ export class CultivoService {
   async create(parcelaId: string, input: CreateCultivoInput) {
     const parcelaExists = await this.parcelaRepo.verifyOwnership(parcelaId);
     if (!parcelaExists) throw new TenantAccessError();
+
+    await this.subscriptionService.checkCropLimit();
 
     const { data, error } = await this.repo.create({
       parcela_id: parcelaId,

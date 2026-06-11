@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS plans (
 -- Insertar planes iniciales
 INSERT INTO plans (id, name, price_clp, max_plots, max_crops, max_reminders, allow_workers) VALUES
 ('free', 'Gratis', 0, 1, 3, 6, false),
-('pro', 'Pro', 1990, 10, 100, 100, false),
+('pro', 'Pro', 2990, 10, 100, 100, false),
 ('organizacion', 'Organización', 9990, 100, 1000, 1000, true)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
