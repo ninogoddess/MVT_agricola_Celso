@@ -37,7 +37,11 @@ export async function POST(request: Request) {
 
     } catch (err: any) {
       console.error('Checkout error:', err);
-      return NextResponse.json({ error: 'No se pudo crear el checkout', details: err.message }, { status: 500 });
+      // Devolvemos err.message en el campo error para que el frontend lo muestre directamente en el cartel rojo
+      return NextResponse.json({ 
+        error: `Error de Mercado Pago: ${err.message || 'Desconocido'}`, 
+        details: err.message 
+      }, { status: 500 });
     }
   });
 }
