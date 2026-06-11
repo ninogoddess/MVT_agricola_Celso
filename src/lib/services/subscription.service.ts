@@ -40,7 +40,7 @@ export class SubscriptionService {
       .from('parcelas')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', this.tenantId)
-      .is('deleted_at', null);
+      .eq('is_active', true);
 
     if (error) throw error;
     if (count !== null && count >= limit) {
@@ -58,7 +58,7 @@ export class SubscriptionService {
       .from('cultivos')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', this.tenantId)
-      .is('deleted_at', null);
+      .eq('is_active', true);
 
     if (error) throw error;
     if (count !== null && count >= limit) {
@@ -78,7 +78,7 @@ export class SubscriptionService {
       .from('cultivos')
       .select('id, recordatorios(id)')
       .eq('tenant_id', this.tenantId)
-      .is('deleted_at', null);
+      .eq('is_active', true);
 
     if (error) throw error;
 
