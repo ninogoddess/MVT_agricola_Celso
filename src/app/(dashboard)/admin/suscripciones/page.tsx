@@ -1,12 +1,48 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { ShieldAlert, Users, Calendar } from 'lucide-react';
+import { ShieldAlert, Users, Calendar, Lock } from 'lucide-react';
 
-export default async function AdminSubscriptionsPage() {
+export default async function AdminSubscriptionsPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) redirect('/login');
+
+  const pin = searchParams.pin;
+
+  if (pin !== '081003') {
+    return (
+      <div className="max-w-md mx-auto mt-20 p-8 bg-white border border-gray-200 rounded-2xl shadow-sm animate-fade-in-up">
+        <div className="flex flex-col items-center text-center space-y-4">
+          <div className="p-4 bg-purple-50 rounded-full">
+            <Lock className="text-purple-600" size={32} />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Acceso Restringido</h1>
+          <p className="text-gray-500">Ingrese el PIN de seguridad para acceder al panel de administración.</p>
+          
+          <form className="w-full mt-4 flex gap-2">
+            <input
+              type="password"
+              name="pin"
+              placeholder="••••••"
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-purple-600 text-white font-medium rounded-xl hover:bg-purple-700 transition-colors"
+            >
+              Entrar
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   const { data: subscriptions, error } = await supabase
     .from('subscriptions')
