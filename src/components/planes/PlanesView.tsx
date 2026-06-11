@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Zap, Building2, Sprout, X, ArrowRight } from "lucide-react";
+import { Check, Zap, Building2, Sprout, X, ArrowRight, Loader2 } from "lucide-react";
 
 export interface Plan {
-  id: "gratis" | "pro" | "organizacion";
+  id: "free" | "pro" | "organizacion";
   name: string;
   price: string;
   priceNote?: string;
@@ -20,7 +20,7 @@ export interface Plan {
 
 const PLANS: Plan[] = [
   {
-    id: "gratis",
+    id: "free",
     name: "Gratis",
     price: "$0",
     priceNote: "para siempre",
@@ -57,7 +57,7 @@ const PLANS: Plan[] = [
       "Exportación de datos",
       "Soporte prioritario",
     ],
-    cta: "Elegir Pro",
+    cta: "Mejorar a Pro",
     popular: true,
   },
   {
@@ -80,18 +80,43 @@ const PLANS: Plan[] = [
       "Exportación y reportes",
       "Soporte dedicado",
     ],
-    cta: "Próximamente",
+    cta: "Mejorar a Institucional",
   },
 ];
 
 interface PlanesViewProps {
-  currentPlan?: "gratis" | "pro" | "organizacion";
+  currentPlan?: "free" | "pro" | "organizacion";
   onClose?: () => void;
   modal?: boolean;
 }
 
-export default function PlanesView({ currentPlan = "gratis", onClose, modal = false }: PlanesViewProps) {
-  const [selected, setSelected] = useState<string | null>(null);
+export default function PlanesView({ currentPlan = "free", onClose, modal = false }: PlanesViewProps) {
+  const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleUpgrade = async (planId: string) => {
+    try {
+      setLoadingPlan(planId);
+      setError(null);
+      
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId })
+      });
+      
+      const data = await res.json();
+      
+      if (!res.ok) throw new Error(data.error || 'Error al procesar pago');
+      
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err: any) {
+      setError(err.message);
+      setLoadingPlan(null);
+    }
+  };
 
   return (
     <div className={modal ? "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 animate-fade-in" : "w-full"}>
@@ -116,8 +141,7 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
           {PLANS.map((plan) => {
             const Icon = plan.icon;
             const isCurrent = plan.id === currentPlan;
-            const isSelected = selected === plan.id;
-            const isComingSoon = plan.id === "organizacion";
+            const isComingSoon = false; // Removido coming soon para permitir pagos de todos
 
             return (
               <div key={plan.id}
@@ -125,21 +149,13 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
                   plan.popular
                     ? "border-green-400 shadow-lg shadow-green-100"
                     : plan.borderColor
-                } ${isCurrent ? "ring-2 ring-offset-2 ring-green-500" : ""} ${isComingSoon ? "opacity-60 grayscale-[30%] pointer-events-none" : ""}`}>
+                } ${isCurrent ? "ring-2 ring-offset-2 ring-green-500" : ""}`}>
 
-                {/* Popular / Próximamente badge */}
+                {/* Popular badge */}
                 {plan.popular && !isComingSoon && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">
                       Más popular
-                    </span>
-                  </div>
-                )}
-                
-                {isComingSoon && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="bg-gray-800 text-white text-xs font-bold px-3 py-1 rounded-full">
-                      Próximamente
                     </span>
                   </div>
                 )}
@@ -177,38 +193,30 @@ export default function PlanesView({ currentPlan = "gratis", onClose, modal = fa
 
                 {/* CTA */}
                 <button
-                  onClick={() => { if (!isCurrent && !isComingSoon) setSelected(plan.id); }}
-                  disabled={isCurrent || isComingSoon}
+                  onClick={() => { if (!isCurrent) handleUpgrade(plan.id); }}
+                  disabled={isCurrent || loadingPlan !== null}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-2 ${
-                    isCurrent || isComingSoon
+                    isCurrent
                       ? "bg-gray-100 text-gray-400 cursor-default"
                       : plan.popular
                       ? "bg-green-600 text-white hover:bg-green-700 shadow-sm"
                       : `${plan.bgColor} ${plan.color} border-2 ${plan.borderColor} hover:opacity-80`
                   }`}
                 >
-                  {isCurrent ? "Plan actual" : plan.cta}
-                  {!isCurrent && !isComingSoon && <ArrowRight size={15} />}
+                  {loadingPlan === plan.id ? <Loader2 size={16} className="animate-spin" /> : isCurrent ? "Plan actual" : plan.cta}
+                  {!isCurrent && loadingPlan !== plan.id && <ArrowRight size={15} />}
                 </button>
               </div>
             );
           })}
         </div>
 
-        {/* Coming soon notice */}
-        <div className={`${modal ? "px-6 pb-6" : ""}`}>
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-sm text-amber-700 text-center">
-            💳 Los pagos en línea están próximamente disponibles. Para actualizar tu plan contáctanos en{" "}
-            <a href="mailto:hola@agrencia.cl" className="font-semibold underline">hola@agrencia.cl</a>
-          </div>
-        </div>
-
-        {/* Selected feedback (para cuando se implementen pagos) */}
-        {selected && (
+        {/* Error notification */}
+        {error && (
           <div className={`${modal ? "px-6 pb-6" : ""}`}>
-            <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-sm text-green-700 flex items-center justify-between">
-              <span>Seleccionaste el plan <strong>{PLANS.find(p => p.id === selected)?.name}</strong>. Los pagos estarán disponibles próximamente.</span>
-              <button onClick={() => setSelected(null)} className="text-green-400 hover:text-green-600 ml-3">
+            <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 flex items-center justify-between">
+              <span>{error}</span>
+              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 ml-3">
                 <X size={16} />
               </button>
             </div>
