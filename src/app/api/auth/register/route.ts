@@ -56,7 +56,21 @@ export async function POST(request: Request) {
       );
     }
 
-    // 3. Crear user_profile
+    // 3. Crear suscripción gratuita por defecto
+    const { error: subError } = await serviceRole.from('subscriptions').insert({
+      tenant_id: tenant.id,
+      plan_id: 'free',
+      status: 'active',
+    });
+
+    if (subError) {
+      return NextResponse.json(
+        { error: 'Error al inicializar suscripción', code: 'SUBSCRIPTION_CREATE_FAILED' },
+        { status: 500 }
+      );
+    }
+
+    // 4. Crear user_profile
     await serviceRole.from('user_profiles').insert({
       id: authData.user.id,
       tenant_id: tenant.id,
