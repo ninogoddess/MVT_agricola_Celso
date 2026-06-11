@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient, User } from '@supabase/supabase-js';
 
 export interface TenantContext {
   userId: string;
   tenantId: string;
   supabase: SupabaseClient;
+  user: User;
 }
 
 /**
@@ -49,5 +50,5 @@ export async function withTenantContext(
     );
   }
 
-  return handler({ userId: user.id, tenantId, supabase });
+  return handler({ userId: user.id, tenantId, supabase, user });
 }

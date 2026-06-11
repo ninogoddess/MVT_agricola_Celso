@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     const paymentId = url.searchParams.get('data.id') || body?.data?.id;
     const type = url.searchParams.get('type') || body?.type;
 
-    if (!paymentId || type !== 'payment') {
+    if (!paymentId) {
       return NextResponse.json({ received: true });
     }
 
@@ -37,14 +37,12 @@ export async function POST(request: Request) {
         const ts = tsPart.split('=')[1];
         const hash = v1Part.split('=')[1];
         
-        // Según documentación de MP: manifest = "id:[data.id];request-id:[x-request-id];ts:[ts];"
         const manifest = `id:${paymentId};request-id:${xRequestId};ts:${ts};`;
         const hmac = crypto.createHmac('sha256', secret);
         hmac.update(manifest);
         const digest = hmac.digest('hex');
         
         if (digest !== hash) {
-          // Firma inválida
           await paymentService.logEvent(null, 'validation_error', { error: 'Invalid x-signature', paymentId });
           return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -52,49 +50,104 @@ export async function POST(request: Request) {
     }
 
     // 1. Logear recepción de webhook
-    await paymentService.logEvent(null, 'webhook_received', { paymentId, body });
+    await paymentService.logEvent(null, 'webhook_received', { paymentId, type, body });
 
-    // 2. Verificar en MP el estado real del pago
-    let mpPayment;
-    try {
-      mpPayment = await paymentService.verifyPayment(paymentId);
-    } catch (err: any) {
-      await paymentService.logEvent(null, 'validation_error', { error: 'Failed to verify payment with MP API', details: err.message });
-      return NextResponse.json({ error: 'Error verifying payment' }, { status: 500 });
-    }
+    // 2. Control de idempotencia y prevención de reenvío
+    // Verificamos si este evento exacto ya fue procesado con éxito
+    const { data: existingLog } = await supabase
+      .from('payment_logs')
+      .select('id')
+      .eq('event_type', type === 'subscription_preapproval' ? 'preapproval_processed' : 'payment_processed')
+      .contains('details', { paymentId })
+      .maybeSingle();
 
-    const status = mpPayment.status;
-    const externalReference = mpPayment.external_reference; // JSON string = { tenantId, planId }
-    
-    if (!externalReference) {
-      await paymentService.logEvent(null, 'validation_error', { error: 'Missing external_reference' });
+    if (existingLog) {
+      console.log(`Webhook idempotency hit for ${type} ${paymentId}`);
       return NextResponse.json({ received: true });
     }
 
-    let tenantId, planId;
-    try {
-      const ref = JSON.parse(externalReference);
-      tenantId = ref.tenantId;
-      planId = ref.planId;
-    } catch {
-      await paymentService.logEvent(null, 'validation_error', { error: 'Invalid external_reference format' });
-      return NextResponse.json({ received: true });
-    }
+    if (type === 'subscription_preapproval') {
+      let mpSubscription;
+      try {
+        mpSubscription = await paymentService.verifyPreApproval(paymentId);
+      } catch (err: any) {
+        await paymentService.logEvent(null, 'validation_error', { error: 'Failed to verify preapproval', details: err.message });
+        return NextResponse.json({ error: 'Error verifying preapproval' }, { status: 500 });
+      }
 
-    if (status === 'approved') {
-      // 3. Pago aprobado -> Actualizar Suscripción
-      await supabase
-        .from('subscriptions')
-        .update({
+      const status = mpSubscription.status;
+      const externalReference = mpSubscription.external_reference; 
+
+      if (!externalReference) {
+        await paymentService.logEvent(null, 'validation_error', { error: 'Missing external_reference' });
+        return NextResponse.json({ received: true });
+      }
+
+      let tenantId, planId;
+      try {
+        const ref = JSON.parse(externalReference);
+        tenantId = ref.tenantId;
+        planId = ref.planId;
+      } catch {
+        await paymentService.logEvent(null, 'validation_error', { error: 'Invalid external_reference' });
+        return NextResponse.json({ received: true });
+      }
+
+      if (status === 'authorized') {
+        await supabase.from('subscriptions').update({
           plan_id: planId,
           status: 'active',
-          start_date: new Date().toISOString()
-        })
-        .eq('tenant_id', tenantId);
-        
-      await paymentService.logEvent(tenantId, 'approved', { paymentId, planId });
-    } else if (status === 'rejected' || status === 'cancelled') {
-      await paymentService.logEvent(tenantId, 'rejected', { paymentId, planId, mpStatus: status });
+          start_date: new Date().toISOString(),
+          mp_preapproval_id: paymentId,
+          next_billing_date: mpSubscription.next_payment_date
+        }).eq('tenant_id', tenantId);
+
+        await paymentService.logEvent(tenantId, 'preapproval_processed', { paymentId, planId, status });
+      } else if (status === 'cancelled') {
+        await supabase.from('subscriptions').update({
+          status: 'cancelled',
+          cancelled_at: new Date().toISOString()
+        }).eq('tenant_id', tenantId).eq('mp_preapproval_id', paymentId);
+
+        await paymentService.logEvent(tenantId, 'preapproval_cancelled', { paymentId, planId, status });
+      }
+
+    } else if (type === 'payment') {
+      let mpPayment;
+      try {
+        mpPayment = await paymentService.verifyPayment(paymentId);
+      } catch (err: any) {
+        await paymentService.logEvent(null, 'validation_error', { error: 'Failed to verify payment', details: err.message });
+        return NextResponse.json({ error: 'Error verifying payment' }, { status: 500 });
+      }
+
+      const status = mpPayment.status;
+      const externalReference = mpPayment.external_reference; 
+      
+      if (!externalReference) return NextResponse.json({ received: true });
+
+      let tenantId, planId;
+      try {
+        const ref = JSON.parse(externalReference);
+        tenantId = ref.tenantId;
+        planId = ref.planId;
+      } catch {
+        return NextResponse.json({ received: true });
+      }
+
+      if (status === 'approved') {
+        // En un esquema de PreApproval, el "payment" aprobado confirma el cobro del mes.
+        // Solo actualizamos la fecha de inicio/estado si no tuviéramos un preapproval.
+        // Lo dejamos como log por seguridad o para cobros únicos.
+        await supabase.from('subscriptions').update({
+          plan_id: planId,
+          status: 'active',
+        }).eq('tenant_id', tenantId);
+          
+        await paymentService.logEvent(tenantId, 'payment_processed', { paymentId, planId });
+      } else if (status === 'rejected' || status === 'cancelled') {
+        await paymentService.logEvent(tenantId, 'rejected', { paymentId, planId, mpStatus: status });
+      }
     }
 
     return NextResponse.json({ received: true });

@@ -25,11 +25,12 @@ export async function POST(request: Request) {
       // Crear la preferencia usando el PaymentService
       const paymentService = new PaymentService(ctx.supabase);
       
-      const { sandboxInitPoint } = await paymentService.createPreference(
+      const { sandboxInitPoint } = await paymentService.createSubscriptionCheckout(
         ctx.tenantId,
         plan.id,
         plan.price_clp,
-        plan.name
+        plan.name,
+        ctx.user.email || 'hola@agrencia.cl'
       );
 
       // Como el requerimiento es Sandbox explícito, siempre retornamos sandboxInitPoint
