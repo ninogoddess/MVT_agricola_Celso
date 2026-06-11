@@ -125,7 +125,7 @@ export default function AjustesPage() {
       {/* Modal de planes */}
       {showPlanes && (
         <PlanesView
-          currentPlan="gratis"
+          currentPlan="free"
           modal
           onClose={() => setShowPlanes(false)}
         />
