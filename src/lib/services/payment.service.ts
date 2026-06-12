@@ -36,7 +36,7 @@ export class PaymentService {
           transaction_amount: priceClp,
           currency_id: 'CLP',
         },
-        back_url: `${siteUrl}/ajustes?payment=success`,
+        back_url: `${siteUrl}/dashboard`,
         status: 'pending',
       },
     });
