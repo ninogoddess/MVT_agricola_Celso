@@ -24,13 +24,24 @@ export async function POST(request: Request) {
 
       // Crear la preferencia usando el PaymentService
       const paymentService = new PaymentService(ctx.supabase);
-      
+
+      // ⚠️ TEMPORAL - SOLO PRUEBAS DE MERCADO PAGO ⚠️
+      // El "payer" (comprador) debe ser un usuario de PRUEBA para que coincida con
+      // el "collector" (vendedor de prueba), de lo contrario MP responde:
+      // "Both payer and collector must be real or test users".
+      // Forzamos el email del COMPRADOR de prueba.
+      // Se puede sobreescribir con la env var MP_TEST_PAYER_EMAIL en Vercel.
+      // 🔴 REVERTIR a `ctx.user.email` antes de pasar a PRODUCCIÓN. 🔴
+      const payerEmail =
+        process.env.MP_TEST_PAYER_EMAIL ||
+        'TESTUSER2412276628925994615@testuser.com';
+
       const { sandboxInitPoint } = await paymentService.createSubscriptionCheckout(
         ctx.tenantId,
         plan.id,
         plan.price_clp,
         plan.name,
-        ctx.user.email || 'hola@agrencia.cl'
+        payerEmail
       );
 
       // Como el requerimiento es Sandbox explícito, siempre retornamos sandboxInitPoint
