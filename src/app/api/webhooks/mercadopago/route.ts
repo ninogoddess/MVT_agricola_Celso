@@ -94,13 +94,24 @@ export async function POST(request: Request) {
       }
 
       if (status === 'authorized') {
-        await supabase.from('subscriptions').update({
+        const { data: updated } = await supabase.from('subscriptions').update({
           plan_id: planId,
           status: 'active',
           start_date: new Date().toISOString(),
           mp_preapproval_id: paymentId,
           next_billing_date: mpSubscription.next_payment_date
-        }).eq('tenant_id', tenantId);
+        }).eq('tenant_id', tenantId).select('id');
+
+        if (!updated || updated.length === 0) {
+          await supabase.from('subscriptions').insert({
+            tenant_id: tenantId,
+            plan_id: planId,
+            status: 'active',
+            start_date: new Date().toISOString(),
+            mp_preapproval_id: paymentId,
+            next_billing_date: mpSubscription.next_payment_date
+          });
+        }
 
         await paymentService.logEvent(tenantId, 'preapproval_processed', { paymentId, planId, status });
       } else if (status === 'cancelled') {

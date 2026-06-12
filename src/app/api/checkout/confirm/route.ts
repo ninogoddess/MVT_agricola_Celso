@@ -72,7 +72,8 @@ export async function POST(request: Request) {
       }
 
       if (status === 'authorized' && planId) {
-        await serviceRole
+        // Update-or-insert: la tabla puede no tener fila para este tenant
+        const { data: updated } = await serviceRole
           .from('subscriptions')
           .update({
             plan_id: planId,
@@ -81,7 +82,19 @@ export async function POST(request: Request) {
             mp_preapproval_id: preapprovalId,
             next_billing_date: (mp as any).next_payment_date ?? null,
           })
-          .eq('tenant_id', ctx.tenantId);
+          .eq('tenant_id', ctx.tenantId)
+          .select('id');
+
+        if (!updated || updated.length === 0) {
+          await serviceRole.from('subscriptions').insert({
+            tenant_id: ctx.tenantId,
+            plan_id: planId,
+            status: 'active',
+            start_date: new Date().toISOString(),
+            mp_preapproval_id: preapprovalId,
+            next_billing_date: (mp as any).next_payment_date ?? null,
+          });
+        }
 
         await paymentService.logEvent(ctx.tenantId, 'preapproval_processed', {
           paymentId: preapprovalId,

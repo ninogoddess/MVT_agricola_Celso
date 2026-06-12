@@ -51,10 +51,22 @@ export async function POST(request: Request) {
       // únicamente del webhook.
       if (preapprovalId) {
         const serviceRole = createSupabaseServiceRoleClient();
-        await serviceRole
+        const { data: updated } = await serviceRole
           .from('subscriptions')
           .update({ mp_preapproval_id: preapprovalId })
-          .eq('tenant_id', ctx.tenantId);
+          .eq('tenant_id', ctx.tenantId)
+          .select('id');
+
+        // Si el tenant no tenía fila de suscripción, la creamos (plan free por ahora;
+        // el confirm la elevará a Pro al verificar el pago).
+        if (!updated || updated.length === 0) {
+          await serviceRole.from('subscriptions').insert({
+            tenant_id: ctx.tenantId,
+            plan_id: 'free',
+            status: 'active',
+            mp_preapproval_id: preapprovalId,
+          });
+        }
       }
 
       // Como el requerimiento es Sandbox explícito, siempre retornamos sandboxInitPoint
