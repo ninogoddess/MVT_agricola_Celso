@@ -1,9 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, Trash2, Smartphone, CreditCard, Sprout, ArrowRight } from "lucide-react";
 import { NotificationStatus, InstallAppStatus } from "@/components/ui/AppBanners";
 import PlanesView from "@/components/planes/PlanesView";
+
+type PlanId = "free" | "pro" | "organizacion";
+
+const PLAN_LABELS: Record<PlanId, { name: string; limits: string }> = {
+  free: { name: "Plan Gratis", limits: "1 parcela · 3 cultivos · 6 recordatorios" },
+  pro: { name: "Plan Pro", limits: "10 parcelas · 100 cultivos · 100 recordatorios" },
+  organizacion: { name: "Plan Institucional", limits: "100 parcelas · 1.000 cultivos · trabajadores" },
+};
 
 export default function AjustesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -11,6 +19,17 @@ export default function AjustesPage() {
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState("");
   const [showPlanes, setShowPlanes] = useState(false);
+  const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
+
+  useEffect(() => {
+    fetch("/api/subscription")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.planId === "pro" || d?.planId === "organizacion") setCurrentPlan(d.planId);
+        else setCurrentPlan("free");
+      })
+      .catch(() => {});
+  }, []);
 
   async function handleDeleteAccount() {
     if (deleteInput !== "ELIMINAR") {
@@ -48,14 +67,14 @@ export default function AjustesPage() {
               <Sprout size={18} className="text-gray-500" />
             </div>
             <div>
-              <p className="font-semibold text-gray-800 text-sm">Plan Gratis</p>
-              <p className="text-xs text-gray-500 mt-0.5">1 parcela · 3 cultivos · 6 recordatorios</p>
+              <p className="font-semibold text-gray-800 text-sm">{PLAN_LABELS[currentPlan].name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{PLAN_LABELS[currentPlan].limits}</p>
             </div>
           </div>
           <button
             onClick={() => setShowPlanes(true)}
             className="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold hover:bg-green-700 min-h-[40px] flex items-center gap-1.5">
-            Actualizar <ArrowRight size={14} />
+            {currentPlan === "free" ? "Actualizar" : "Cambiar"} <ArrowRight size={14} />
           </button>
         </div>
       </section>
@@ -125,7 +144,7 @@ export default function AjustesPage() {
       {/* Modal de planes */}
       {showPlanes && (
         <PlanesView
-          currentPlan="free"
+          currentPlan={currentPlan}
           modal
           onClose={() => setShowPlanes(false)}
         />

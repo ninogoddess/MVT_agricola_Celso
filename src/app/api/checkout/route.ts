@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/middleware/tenant-filter';
 import { PaymentService } from '@/lib/services/payment.service';
+import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 
 export async function POST(request: Request) {
   return withTenantContext(async (ctx) => {
@@ -36,13 +37,25 @@ export async function POST(request: Request) {
         process.env.MP_TEST_PAYER_EMAIL ||
         'TESTUSER2412276628925994615@testuser.com';
 
-      const { sandboxInitPoint } = await paymentService.createSubscriptionCheckout(
+      const { sandboxInitPoint, preapprovalId } = await paymentService.createSubscriptionCheckout(
         ctx.tenantId,
         plan.id,
         plan.price_clp,
         plan.name,
         payerEmail
       );
+
+      // Guardamos el preapproval_id en la suscripción del tenant (vía service role,
+      // porque `subscriptions` tiene RLS sin política de UPDATE para usuarios).
+      // Esto permite verificar y confirmar el pago al volver (back_url), sin depender
+      // únicamente del webhook.
+      if (preapprovalId) {
+        const serviceRole = createSupabaseServiceRoleClient();
+        await serviceRole
+          .from('subscriptions')
+          .update({ mp_preapproval_id: preapprovalId })
+          .eq('tenant_id', ctx.tenantId);
+      }
 
       // Como el requerimiento es Sandbox explícito, siempre retornamos sandboxInitPoint
       return NextResponse.json({ url: sandboxInitPoint });

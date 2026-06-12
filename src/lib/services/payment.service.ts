@@ -66,6 +66,7 @@ export class PaymentService {
     return {
       initPoint: result.init_point,
       sandboxInitPoint: result.init_point, // PreApproval API no tiene sandbox_init_point en el SDK, usa init_point
+      preapprovalId: result.id,
     };
   }
 
