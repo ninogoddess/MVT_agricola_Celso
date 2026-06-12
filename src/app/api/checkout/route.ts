@@ -49,10 +49,29 @@ export async function POST(request: Request) {
 
     } catch (err: any) {
       console.error('Checkout error:', err);
-      // Devolvemos err.message en el campo error para que el frontend lo muestre directamente en el cartel rojo
-      return NextResponse.json({ 
-        error: `Error de Mercado Pago: ${err.message || 'Desconocido'}`, 
-        details: err.message 
+
+      // El SDK de Mercado Pago suele incluir el detalle real en err.cause / err.error.
+      // Lo extraemos para mostrar la causa concreta en lugar de "Internal server error".
+      const mpCause =
+        err?.cause ??
+        err?.error ??
+        err?.response?.data ??
+        null;
+
+      let detalle = err?.message || 'Desconocido';
+      try {
+        if (mpCause) {
+          detalle = typeof mpCause === 'string' ? mpCause : JSON.stringify(mpCause);
+        }
+      } catch {
+        // ignore stringify errors
+      }
+
+      return NextResponse.json({
+        error: `Error de Mercado Pago: ${detalle}`,
+        message: err?.message ?? null,
+        status: err?.status ?? err?.statusCode ?? null,
+        cause: mpCause,
       }, { status: 500 });
     }
   });
