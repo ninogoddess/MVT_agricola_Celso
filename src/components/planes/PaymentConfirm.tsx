@@ -17,6 +17,7 @@ export default function PaymentConfirm() {
 
   useEffect(() => {
     if (ran.current) return;
+    ran.current = true;
 
     const preapprovalId =
       searchParams.get("preapproval_id") || searchParams.get("preapprovalId");
@@ -25,10 +26,8 @@ export default function PaymentConfirm() {
       searchParams.get("payment") === "processing" ||
       searchParams.get("status") === "authorized";
 
-    if (!cameFromPayment) return;
-
-    ran.current = true;
-    setState("checking");
+    // Mostramos "verificando" solo si claramente venimos del pago.
+    if (cameFromPayment) setState("checking");
 
     (async () => {
       try {
@@ -42,14 +41,18 @@ export default function PaymentConfirm() {
         if (data.updated) {
           setState("success");
           router.refresh();
-        } else {
+        } else if (cameFromPayment) {
           setState("pending");
+        } else {
+          setState("idle");
         }
       } catch {
-        setState("pending");
+        if (cameFromPayment) setState("pending");
       } finally {
-        // Limpiar los parámetros de la URL
-        window.history.replaceState({}, "", window.location.pathname);
+        if (cameFromPayment) {
+          // Limpiar los parámetros de la URL
+          window.history.replaceState({}, "", window.location.pathname);
+        }
       }
     })();
   }, [searchParams, router]);

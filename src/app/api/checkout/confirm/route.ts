@@ -29,18 +29,22 @@ export async function POST(request: Request) {
 
       const serviceRole = createSupabaseServiceRoleClient();
 
-      // Determinar el preapproval_id a verificar
-      let preapprovalId = bodyPreapprovalId;
-      if (!preapprovalId) {
-        const { data: sub } = await serviceRole
-          .from('subscriptions')
-          .select('mp_preapproval_id')
-          .eq('tenant_id', ctx.tenantId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-        preapprovalId = sub?.mp_preapproval_id || undefined;
+      // Leer la suscripción actual del tenant
+      const { data: sub } = await serviceRole
+        .from('subscriptions')
+        .select('plan_id, status, mp_preapproval_id')
+        .eq('tenant_id', ctx.tenantId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Si ya tiene un plan de pago activo, no hay nada que hacer (evita llamadas a MP)
+      if (sub && (sub.plan_id === 'pro' || sub.plan_id === 'organizacion') && sub.status === 'active') {
+        return NextResponse.json({ updated: false, alreadyActive: true, plan: sub.plan_id });
       }
+
+      // Determinar el preapproval_id a verificar
+      let preapprovalId = bodyPreapprovalId || sub?.mp_preapproval_id || undefined;
 
       if (!preapprovalId) {
         return NextResponse.json({ updated: false, reason: 'no_preapproval' });
