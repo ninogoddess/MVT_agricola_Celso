@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Sprout, CheckCircle2, Lightbulb, CalendarDays } from "lucide-react";
+import { UpgradeModal } from "@/components/ui/Modals";
 
 interface Cultivo {
   id: string;
@@ -51,6 +52,7 @@ export default function CultivosPage() {
   const [plantingDate, setPlantingDate] = useState("");
   const [isAlreadyPlanted, setIsAlreadyPlanted] = useState(false);
   const [formError, setFormError] = useState("");
+  const [showUpgrade, setShowUpgrade] = useState(false);
 
   const species = Array.from(new Set(cropParams.map((c) => c.species))).sort();
   const varieties = cropParams
@@ -112,7 +114,12 @@ export default function CultivosPage() {
       setCultivoName(""); setSelectedSpecies(""); setSelectedVariety(""); setPlantingDate(""); setIsAlreadyPlanted(false);
     } else {
       const d = await res.json();
-      setFormError(d.error || "Error al agregar cultivo");
+      if (d.code === "LIMIT_EXCEEDED") {
+        setShowForm(false);
+        setShowUpgrade(true);
+      } else {
+        setFormError(d.error || "Error al agregar cultivo");
+      }
     }
   }
 
@@ -267,6 +274,8 @@ export default function CultivosPage() {
           ))}
         </div>
       )}
+
+      <UpgradeModal open={showUpgrade} resource="cultivos" onClose={() => setShowUpgrade(false)} />
     </div>
   );
 }

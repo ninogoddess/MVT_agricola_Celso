@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Sigma, Snowflake, MapPin, Sprout } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Sigma, Snowflake, MapPin, Sprout, Lock, ArrowRight } from "lucide-react";
+import { usePlan } from "@/hooks/usePlan";
 import { analyzeClimate, GDD_BASE, CHILL_THRESHOLD, type DailyPoint, type ClimateAnalysis } from "@/lib/utils/climate-analytics";
 
 interface Parcela { id: string; name: string }
 interface ParcelaAnalysis { parcela: Parcela; analysis: ClimateAnalysis | null }
 
 export default function GddPage() {
+  const router = useRouter();
+  const { isPaid, loading: planLoading } = usePlan();
   const [items, setItems] = useState<ParcelaAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isPaid) { setLoading(false); return; }
     fetch("/api/parcelas")
       .then((r) => r.json())
       .then(async (parc) => {
@@ -32,7 +37,7 @@ export default function GddPage() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [isPaid]);
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -66,7 +71,24 @@ export default function GddPage() {
         </p>
       </div>
 
-      {loading ? (
+      {planLoading ? (
+        <div className="h-40 skeleton rounded-xl" />
+      ) : !isPaid ? (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 text-center">
+          <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mx-auto mb-3">
+            <Lock size={22} className="text-green-600" />
+          </div>
+          <h2 className="font-bold text-gray-900 mb-1">Función del plan Pro</h2>
+          <p className="text-sm text-gray-600 mb-4 max-w-md mx-auto">
+            El cálculo de grados-día y horas-frío por parcela está disponible en el plan Pro.
+            Mejora tu plan para estimar mejor el desarrollo de tus cultivos.
+          </p>
+          <button onClick={() => router.push("/planes")}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[44px]">
+            Mejorar a Pro <ArrowRight size={15} />
+          </button>
+        </div>
+      ) : loading ? (
         <div className="h-40 skeleton rounded-xl" />
       ) : items.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">

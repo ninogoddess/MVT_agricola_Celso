@@ -110,6 +110,7 @@ export default function FinanzasPage() {
   if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
   const g = summary?.general ?? { income: 0, expense: 0, balance: 0 };
+  const hasData = transactions.length > 0;
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -135,6 +136,7 @@ export default function FinanzasPage() {
       </div>
 
       {/* Resumen general */}
+      {hasData && (
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex items-center gap-2 text-emerald-600 mb-1"><TrendingUp size={16} /><span className="text-xs font-medium text-gray-500">Ingresos totales</span></div>
@@ -149,6 +151,20 @@ export default function FinanzasPage() {
           <div className={`text-xl font-bold ${g.balance >= 0 ? "text-emerald-700" : "text-red-600"}`}>{clp(g.balance)}</div>
         </div>
       </div>
+      )}
+
+      {/* Estado vacío */}
+      {!hasData && !showForm && (
+        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+          <Wallet size={40} className="mx-auto text-gray-300 mb-3" />
+          <p className="text-gray-600 font-medium">Aún no se registran datos en finanzas</p>
+          <p className="text-gray-400 text-sm mt-1 mb-4">Agrega tu primer ingreso o gasto para ver la rentabilidad de tu campo.</p>
+          <button onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[44px]">
+            <Plus size={16} /> Registrar movimiento
+          </button>
+        </div>
+      )}
 
       {/* Formulario */}
       {showForm && (
@@ -222,7 +238,7 @@ export default function FinanzasPage() {
       )}
 
       {/* Rentabilidad por parcela y cultivo */}
-      {summary && summary.byParcela.length > 0 && (
+      {hasData && summary && summary.byParcela.length > 0 && (
         <div className="space-y-3">
           <h2 className="font-semibold text-gray-800">Rentabilidad por parcela</h2>
           {summary.byParcela.map((p) => (
@@ -254,6 +270,7 @@ export default function FinanzasPage() {
       )}
 
       {/* Movimientos recientes */}
+      {hasData && (
       <div className="space-y-3">
         <h2 className="font-semibold text-gray-800">Movimientos recientes</h2>
         {transactions.length === 0 ? (
@@ -293,6 +310,7 @@ export default function FinanzasPage() {
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }

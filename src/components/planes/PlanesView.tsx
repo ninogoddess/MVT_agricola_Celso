@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Check, Zap, Building2, Sprout, X, ArrowRight, Loader2 } from "lucide-react";
+import { ConfirmModal } from "@/components/ui/Modals";
 
 export interface Plan {
   id: "free" | "pro" | "organizacion";
@@ -31,10 +32,11 @@ const PLANS: Plan[] = [
     badgeColor: "bg-gray-100 text-gray-600",
     features: [
       "1 parcela",
-      "3 cultivos activos",
-      "6 recordatorios",
-      "Datos climáticos diarios",
+      "5 cultivos activos",
+      "5 recordatorios con notificaciones",
+      "Clima en tiempo real y pronóstico 7 días",
       "Recomendaciones de siembra",
+      "Cuaderno de campo y finanzas",
     ],
     cta: "Plan actual",
   },
@@ -50,12 +52,12 @@ const PLANS: Plan[] = [
     badgeColor: "bg-green-100 text-green-700",
     features: [
       "10 parcelas",
-      "100 cultivos activos",
-      "100 recordatorios",
-      "Alertas climáticas avanzadas",
-      "Recomendaciones de cosecha",
-      "Exportación de datos",
-      "Soporte prioritario",
+      "50 cultivos activos",
+      "100 recordatorios con notificaciones",
+      "Todo lo del plan Gratis",
+      "Recomendación de cultivos según tu suelo",
+      "Alertas de heladas y golpe de calor",
+      "Grados-día y horas-frío",
     ],
     cta: "Mejorar a Pro",
     popular: true,
@@ -76,9 +78,7 @@ const PLANS: Plan[] = [
       "1.000 recordatorios",
       "Múltiples usuarios / trabajadores",
       "Panel de administración",
-      "Alertas climáticas avanzadas",
-      "Exportación y reportes",
-      "Soporte dedicado",
+      "Todo lo del plan Pro",
     ],
     cta: "Mejorar a Institucional",
   },
@@ -98,6 +98,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
   // Plan en proceso de confirmación (muestra el popup previo al pago).
   const [confirmPlan, setConfirmPlan] = useState<Plan | null>(null);
   const [mpEmail, setMpEmail] = useState("");
+  const [showDowngrade, setShowDowngrade] = useState(false);
 
   // Etiqueta dinámica del botón según el plan actual del usuario.
   const getCtaLabel = (plan: Plan) => {
@@ -135,7 +136,6 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
   };
 
   const handleDowngrade = async () => {
-    if (!confirm("¿Seguro que quieres volver al plan Gratis? Se cancelará tu suscripción de pago.")) return;
     try {
       setLoadingPlan("free");
       setError(null);
@@ -150,12 +150,13 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
     } catch (err: any) {
       setError(err.message);
       setLoadingPlan(null);
+      setShowDowngrade(false);
     }
   };
 
   const handleAction = (plan: Plan) => {
     if (plan.id === currentPlan || plan.id === "organizacion") return;
-    if (plan.id === "free") return handleDowngrade();
+    if (plan.id === "free") { setError(null); setShowDowngrade(true); return; }
     // Para mejorar a un plan de pago, mostramos primero el popup de confirmación.
     setMpEmail("");
     setError(null);
@@ -344,6 +345,19 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
           </div>
         </div>
       )}
+
+      {/* Confirmación para volver al plan Gratis */}
+      <ConfirmModal
+        open={showDowngrade}
+        title="Volver al plan Gratis"
+        message="Se cancelará tu suscripción de pago y volverás a los límites del plan Gratis. ¿Quieres continuar?"
+        confirmLabel="Sí, volver a Gratis"
+        cancelLabel="Cancelar"
+        danger
+        loading={loadingPlan === "free"}
+        onConfirm={handleDowngrade}
+        onClose={() => setShowDowngrade(false)}
+      />
     </div>
   );
 }

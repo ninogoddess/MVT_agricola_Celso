@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2, RotateCcw } from "lucide-react";
 import { NotificationBanner } from "@/components/ui/AppBanners";
 import { useNotifications } from "@/hooks/useNotifications";
+import { UpgradeModal } from "@/components/ui/Modals";
 
 interface Reminder {
   id: string;
@@ -39,6 +40,7 @@ export default function RecordatoriosPage() {
   const [tab, setTab] = useState<"pending" | "history">("pending");
   const [formData, setFormData] = useState({ parcelaId: "", cultivoId: "", taskType: "", scheduledAt: "" });
   const [formError, setFormError] = useState("");
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const { scheduleReminder } = useNotifications();
 
   useEffect(() => {
@@ -122,7 +124,12 @@ export default function RecordatoriosPage() {
       setFormData({ parcelaId: "", cultivoId: "", taskType: "", scheduledAt: "" });
     } else {
       const d = await res.json();
-      setFormError(d.error || "Error al crear recordatorio");
+      if (d.code === "LIMIT_EXCEEDED") {
+        setShowForm(false);
+        setShowUpgrade(true);
+      } else {
+        setFormError(d.error || "Error al crear recordatorio");
+      }
     }
   }
 
@@ -314,6 +321,8 @@ export default function RecordatoriosPage() {
           })}
         </div>
       )}
+
+      <UpgradeModal open={showUpgrade} resource="recordatorios" onClose={() => setShowUpgrade(false)} />
     </div>
   );
 }

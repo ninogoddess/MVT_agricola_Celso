@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Locate } from "lucide-react";
+import { UpgradeModal } from "@/components/ui/Modals";
 
 export default function NewParcelaPage() {
   const router = useRouter();
@@ -13,6 +14,32 @@ export default function NewParcelaPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+  const [locationName, setLocationName] = useState("");
+  const [geoNameLoading, setGeoNameLoading] = useState(false);
+  const [showUpgrade, setShowUpgrade] = useState(false);
+
+  // Convierte las coordenadas capturadas en un nombre de lugar legible (Nominatim).
+  async function fetchLocationName(lat: number, lon: number) {
+    setGeoNameLoading(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`,
+        { headers: { "Accept": "application/json" } }
+      );
+      const data = await res.json();
+      const a = data.address ?? {};
+      const parts = [
+        a.village || a.town || a.city || a.municipality || a.hamlet || a.suburb,
+        a.state,
+        a.country,
+      ].filter(Boolean);
+      setLocationName(parts.join(", ") || data.display_name?.split(",").slice(0, 3).join(", ") || "");
+    } catch {
+      setLocationName("");
+    } finally {
+      setGeoNameLoading(false);
+    }
+  }
 
   function useMyLocation() {
     if (!navigator.geolocation) {
@@ -22,9 +49,12 @@ export default function NewParcelaPage() {
     setGeoLoading(true);
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setLatitude(position.coords.latitude.toFixed(7));
-        setLongitude(position.coords.longitude.toFixed(7));
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        setLatitude(lat.toFixed(7));
+        setLongitude(lon.toFixed(7));
         setGeoLoading(false);
+        fetchLocationName(lat, lon);
       },
       (err) => {
         setError("No se pudo obtener la ubicación: " + err.message);
@@ -54,7 +84,9 @@ export default function NewParcelaPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.fields) {
+        if (data.code === "LIMIT_EXCEEDED") {
+          setShowUpgrade(true);
+        } else if (data.fields) {
           setError(data.fields.map((f: { message: string }) => f.message).join(", "));
         } else {
           setError(data.error || "Error al crear parcela");
@@ -76,17 +108,8 @@ export default function NewParcelaPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg border border-gray-200">
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm flex flex-col gap-2">
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             <p>{error}</p>
-            {error.toLowerCase().includes('límite') && (
-              <button
-                type="button"
-                onClick={() => router.push('/planes')}
-                className="mt-1 px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 w-fit transition-colors"
-              >
-                Ver planes y mejorar
-              </button>
-            )}
           </div>
         )}
 
@@ -123,9 +146,21 @@ export default function NewParcelaPage() {
             </div>
           </div>
           {latitude && longitude && (
-            <p className="text-sm text-green-600 font-medium mt-2 flex items-center gap-1 bg-green-50 p-2 rounded-lg border border-green-200">
-              <MapPin size={16} /> ¡Ubicación capturada con éxito!
-            </p>
+            <div className="mt-2 bg-green-50 p-3 rounded-lg border border-green-200">
+              <p className="text-sm text-green-700 font-medium flex items-center gap-1">
+                <MapPin size={16} /> ¡Ubicación capturada con éxito!
+              </p>
+              <p className="text-sm text-green-800 mt-1">
+                {geoNameLoading
+                  ? "Identificando lugar..."
+                  : locationName
+                    ? <>📍 {locationName}</>
+                    : <>Coordenadas: {latitude}, {longitude}</>}
+              </p>
+              {locationName && (
+                <p className="text-xs text-green-600 mt-0.5">Coordenadas: {latitude}, {longitude}</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -147,6 +182,8 @@ export default function NewParcelaPage() {
           </button>
         </div>
       </form>
+
+      <UpgradeModal open={showUpgrade} resource="parcelas" onClose={() => setShowUpgrade(false)} />
     </div>
   );
 }

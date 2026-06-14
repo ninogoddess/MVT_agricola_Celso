@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sprout, CheckCircle2, AlertTriangle, Lightbulb } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Sprout, CheckCircle2, AlertTriangle, Lightbulb, Lock, ArrowRight } from "lucide-react";
+import { usePlan } from "@/hooks/usePlan";
 
 interface Suggestion {
   species: string;
@@ -28,16 +30,41 @@ function scoreColor(score: number) {
 }
 
 export default function CropSuggestions({ parcelaId }: { parcelaId: string }) {
+  const router = useRouter();
+  const { isPaid, loading: planLoading } = usePlan();
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isPaid) { setLoading(false); return; }
     fetch(`/api/parcelas/${parcelaId}/crop-suggestions`)
       .then((r) => r.json())
       .then(setData)
       .catch(() => setData({ error: "ERROR" }))
       .finally(() => setLoading(false));
-  }, [parcelaId]);
+  }, [parcelaId, isPaid]);
+
+  if (planLoading) return <div className="h-40 skeleton rounded-xl" />;
+
+  // Función premium: bloqueada para el plan Gratis.
+  if (!isPaid) {
+    return (
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="font-semibold text-gray-800 mb-1 flex items-center gap-2">
+          <Lightbulb size={18} className="text-green-600" /> Cultivos recomendados para tu suelo
+          <span className="text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Pro</span>
+        </h2>
+        <p className="text-sm text-gray-600 mb-4">
+          Descubre qué cultivos aprovechan mejor tu suelo según su pH, humedad, la ubicación de tu parcela
+          y el clima actual. Disponible en el plan Pro.
+        </p>
+        <button onClick={() => router.push("/planes")}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[44px]">
+          <Lock size={15} /> Mejorar a Pro <ArrowRight size={15} />
+        </button>
+      </div>
+    );
+  }
 
   if (loading) return <div className="h-40 skeleton rounded-xl" />;
 
