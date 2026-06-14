@@ -95,6 +95,9 @@ const PLAN_ORDER: Record<string, number> = { free: 0, pro: 1, organizacion: 2 };
 export default function PlanesView({ currentPlan = "free", onClose, modal = false }: PlanesViewProps) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Plan en proceso de confirmación (muestra el popup previo al pago).
+  const [confirmPlan, setConfirmPlan] = useState<Plan | null>(null);
+  const [mpEmail, setMpEmail] = useState("");
 
   // Etiqueta dinámica del botón según el plan actual del usuario.
   const getCtaLabel = (plan: Plan) => {
@@ -110,23 +113,24 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
     try {
       setLoadingPlan(planId);
       setError(null);
-      
+
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId })
+        body: JSON.stringify({ planId, payerEmail: mpEmail.trim() || undefined })
       });
-      
+
       const data = await res.json();
-      
+
       if (!res.ok) throw new Error(data.error || 'Error al procesar pago');
-      
+
       if (data.url) {
         window.location.href = data.url;
       }
     } catch (err: any) {
       setError(err.message);
       setLoadingPlan(null);
+      setConfirmPlan(null);
     }
   };
 
@@ -152,7 +156,10 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
   const handleAction = (plan: Plan) => {
     if (plan.id === currentPlan || plan.id === "organizacion") return;
     if (plan.id === "free") return handleDowngrade();
-    return handleUpgrade(plan.id);
+    // Para mejorar a un plan de pago, mostramos primero el popup de confirmación.
+    setMpEmail("");
+    setError(null);
+    setConfirmPlan(plan);
   };
 
   return (
@@ -260,6 +267,83 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
           </div>
         )}
       </div>
+
+      {/* Popup de confirmación previo al pago */}
+      {confirmPlan && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 animate-fade-in"
+          onClick={() => loadingPlan === null && setConfirmPlan(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90dvh] overflow-y-auto animate-scale-in"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <div className="flex items-center gap-3">
+                  <div className={`w-11 h-11 rounded-xl ${confirmPlan.bgColor} flex items-center justify-center`}>
+                    <confirmPlan.icon size={22} className={confirmPlan.color} />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">¡Gracias por unirte!</h3>
+                    <p className="text-sm text-gray-500">Plan {confirmPlan.name}</p>
+                  </div>
+                </div>
+                {loadingPlan === null && (
+                  <button onClick={() => setConfirmPlan(null)}
+                    className="text-gray-400 hover:text-gray-600 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl hover:bg-gray-100">
+                    <X size={18} />
+                  </button>
+                )}
+              </div>
+
+              <p className="text-sm text-gray-600 mb-4">
+                Felicitaciones por dar el paso de potenciar tu campo con Agrencia. Con el plan{" "}
+                <strong>{confirmPlan.name}</strong> vas a disfrutar de:
+              </p>
+
+              <ul className="space-y-2 mb-5">
+                {confirmPlan.features.map((f) => (
+                  <li key={f} className="flex items-start gap-2.5 text-sm text-gray-700">
+                    <Check size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              {/* Aclaración del correo de Mercado Pago */}
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3.5 text-sm text-amber-800 mb-4">
+                <p className="font-medium mb-1">Antes de continuar</p>
+                <p>
+                  El pago se realiza con <strong>Mercado Pago</strong>. Para que se procese correctamente,
+                  conviene que el correo de tu cuenta de Mercado Pago sea el mismo con el que te registraste
+                  en Agrencia. Si usas otro correo en Mercado Pago, indícalo aquí abajo.
+                </p>
+              </div>
+
+              <div className="mb-5">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Correo de Mercado Pago <span className="text-gray-400">(opcional)</span>
+                </label>
+                <input type="email" value={mpEmail} onChange={(e) => setMpEmail(e.target.value)}
+                  placeholder="Déjalo vacío si es el mismo de tu cuenta"
+                  className="w-full px-3 py-2.5 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-green-500" />
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 mb-4">{error}</div>
+              )}
+
+              <div className="flex gap-2">
+                <button onClick={() => setConfirmPlan(null)} disabled={loadingPlan !== null}
+                  className="px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 min-h-[48px] disabled:opacity-50">
+                  Cancelar
+                </button>
+                <button onClick={() => handleUpgrade(confirmPlan.id)} disabled={loadingPlan !== null}
+                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[48px] flex items-center justify-center gap-2 disabled:opacity-60">
+                  {loadingPlan !== null ? <Loader2 size={18} className="animate-spin" /> : <>Continuar al pago <ArrowRight size={16} /></>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

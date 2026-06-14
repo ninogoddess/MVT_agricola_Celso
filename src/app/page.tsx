@@ -360,6 +360,14 @@ export default function Home() {
                     className="w-full py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 disabled:opacity-50 min-h-[48px]">
                     {loading ? "Creando cuenta..." : "Crear Cuenta Gratis"}
                   </button>
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700 flex items-start gap-2">
+                    <TriangleAlert size={14} className="flex-shrink-0 mt-0.5" />
+                    <span>
+                      Si más adelante quieres unirte al plan Pro, te recomendamos registrarte con el
+                      mismo correo de tu cuenta de Mercado Pago, para que el pago se procese sin
+                      complicaciones.
+                    </span>
+                  </div>
                   <div className="relative flex items-center gap-3 py-1">
                     <div className="flex-1 h-px bg-gray-200" />
                     <span className="text-xs text-gray-400 font-medium">o regístrate con</span>

@@ -6,12 +6,11 @@ import { createSupabaseServiceRoleClient } from '@/lib/supabase/service-role';
 export async function POST(request: Request) {
   return withTenantContext(async (ctx) => {
     try {
-      const { planId } = await request.json();
+      const { planId, payerEmail: customPayerEmail } = await request.json();
 
       if (!planId) {
         return NextResponse.json({ error: 'planId es requerido' }, { status: 400 });
       }
-
       // Validar que el plan existe y obtener su precio real de la BD
       const { data: plan, error } = await ctx.supabase
         .from('plans')
@@ -32,13 +31,11 @@ export async function POST(request: Request) {
       // prueba de la MISMA aplicación de Mercado Pago, de lo contrario MP responde:
       // "Both payer and collector must be real or test users".
       //
-      // Para poder probar con VARIOS usuarios de prueba, registra cada cuenta de la
-      // app usando el email de un usuario de prueba (TESTUSERxxxx@testuser.com) y
-      // este checkout usará automáticamente ese email.
-      //
-      // `MP_TEST_PAYER_EMAIL` queda como override opcional para forzar un comprador
-      // de prueba puntual. En PRODUCCIÓN no se define y se usa el email real.
-      const payerEmail = process.env.MP_TEST_PAYER_EMAIL || ctx.user.email;
+      // El usuario puede indicar en el checkout un correo de Mercado Pago distinto
+      // al de su cuenta de Agrencia (campo opcional del popup). Si no lo indica,
+      // usamos el email de su sesión.
+      const cleanCustom = typeof customPayerEmail === 'string' ? customPayerEmail.trim() : '';
+      const payerEmail = cleanCustom || ctx.user.email;
 
       if (!payerEmail) {
         return NextResponse.json({ error: 'No se pudo determinar el email del comprador' }, { status: 400 });
