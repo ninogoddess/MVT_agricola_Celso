@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Resumen rápido", icon: LayoutDashboard },
   { href: "/dia-a-dia", label: "Día a día", icon: Sun },
   { href: "/parcelas", label: "Parcelas", icon: Map },
   { href: "/recomendaciones-globales", label: "Recomendaciones", icon: Lightbulb },

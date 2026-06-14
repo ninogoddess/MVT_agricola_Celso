@@ -1,17 +1,25 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { AlertTriangle, Trash2, Smartphone, CreditCard, Sprout, ArrowRight } from "lucide-react";
+import { AlertTriangle, Trash2, Smartphone, CreditCard, Sprout, ArrowRight, User, Mail, Building2, Calendar } from "lucide-react";
 import { NotificationStatus, InstallAppStatus } from "@/components/ui/AppBanners";
 import PlanesView from "@/components/planes/PlanesView";
 
 type PlanId = "free" | "pro" | "organizacion";
 
 const PLAN_LABELS: Record<PlanId, { name: string; limits: string }> = {
-  free: { name: "Plan Gratis", limits: "1 parcela · 3 cultivos · 6 recordatorios" },
-  pro: { name: "Plan Pro", limits: "10 parcelas · 100 cultivos · 100 recordatorios" },
+  free: { name: "Plan Gratis", limits: "1 parcela · 5 cultivos · 5 recordatorios" },
+  pro: { name: "Plan Pro", limits: "10 parcelas · 50 cultivos · 100 recordatorios" },
   organizacion: { name: "Plan Institucional", limits: "100 parcelas · 1.000 cultivos · trabajadores" },
 };
+
+interface Account {
+  email: string;
+  tenantName: string | null;
+  role: string;
+  provider: string;
+  createdAt: string;
+}
 
 export default function AjustesPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -20,6 +28,7 @@ export default function AjustesPage() {
   const [error, setError] = useState("");
   const [showPlanes, setShowPlanes] = useState(false);
   const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
+  const [account, setAccount] = useState<Account | null>(null);
 
   useEffect(() => {
     fetch("/api/subscription")
@@ -28,6 +37,11 @@ export default function AjustesPage() {
         if (d?.planId === "pro" || d?.planId === "organizacion") setCurrentPlan(d.planId);
         else setCurrentPlan("free");
       })
+      .catch(() => {});
+
+    fetch("/api/account")
+      .then((r) => r.json())
+      .then((d) => { if (d?.email) setAccount(d); })
       .catch(() => {});
   }, []);
 
@@ -55,6 +69,49 @@ export default function AjustesPage() {
   return (
     <div className="space-y-6 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Ajustes</h1>
+
+      {/* ── Mi cuenta ── */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide flex items-center gap-2">
+          <User size={14} /> Mi cuenta
+        </h2>
+        <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
+          <div className="flex items-center gap-3 p-4">
+            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+              <Mail size={16} className="text-green-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Correo</p>
+              <p className="font-medium text-gray-800 text-sm truncate">{account?.email ?? "—"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4">
+            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+              <Building2 size={16} className="text-green-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-gray-500">Campo / organización</p>
+              <p className="font-medium text-gray-800 text-sm truncate">{account?.tenantName ?? "—"}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4">
+            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
+              <Calendar size={16} className="text-green-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs text-gray-500">Cuenta creada</p>
+              <p className="font-medium text-gray-800 text-sm">
+                {account?.createdAt ? new Date(account.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) : "—"}
+              </p>
+            </div>
+            {account?.provider && (
+              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize flex-shrink-0">
+                {account.provider === "google" ? "Google" : "Correo"}
+              </span>
+            )}
+          </div>
+        </div>
+      </section>
 
       {/* ── Plan actual ── */}
       <section className="space-y-3">
