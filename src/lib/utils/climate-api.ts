@@ -98,3 +98,57 @@ export async function fetchClimateData(
   }
   return fetchOpenWeatherMap(latitude, longitude);
 }
+
+/**
+ * Punto por día para gráficos de histórico/pronóstico.
+ */
+export interface ClimateDailyPoint {
+  date: string;          // YYYY-MM-DD
+  tempMax: number | null;
+  tempMin: number | null;
+  precipitationProb: number | null;
+  precipitationSum: number | null;
+  isPast: boolean;
+}
+
+/**
+ * Histórico (7 días atrás) + pronóstico (7 días adelante) por día, en vivo desde
+ * Open-Meteo, para una coordenada. Datos reales de la ubicación de la parcela.
+ */
+export async function fetchClimateHistory(
+  latitude: number,
+  longitude: number
+): Promise<ClimateDailyPoint[] | null> {
+  const start = Date.now();
+  try {
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.set('latitude', String(latitude));
+    url.searchParams.set('longitude', String(longitude));
+    url.searchParams.set('daily', 'temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum');
+    url.searchParams.set('past_days', '7');
+    url.searchParams.set('forecast_days', '7');
+    url.searchParams.set('timezone', 'auto');
+
+    const res = await fetch(url.toString(), { signal: AbortSignal.timeout(10000) });
+    logExternalCall('open-meteo', res.ok, Date.now() - start);
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const d = data.daily;
+    if (!d?.time) return null;
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    return d.time.map((date: string, i: number): ClimateDailyPoint => ({
+      date,
+      tempMax: d.temperature_2m_max?.[i] ?? null,
+      tempMin: d.temperature_2m_min?.[i] ?? null,
+      precipitationProb: d.precipitation_probability_max?.[i] ?? null,
+      precipitationSum: d.precipitation_sum?.[i] ?? null,
+      isPast: date < todayStr,
+    }));
+  } catch {
+    logExternalCall('open-meteo', false, Date.now() - start);
+    return null;
+  }
+}

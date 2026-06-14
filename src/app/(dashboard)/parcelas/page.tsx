@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { MapPin, Layers, Plus } from "lucide-react";
+import { MapPin, Layers, Plus, Thermometer, Droplets, CloudRain } from "lucide-react";
 
 interface Parcela {
   id: string;
@@ -12,6 +12,13 @@ interface Parcela {
   area_hectares: string;
   is_active: boolean;
   color: string | null;
+}
+
+interface ClimateSummary {
+  temperature: number;
+  humidity: number;
+  windSpeed: number;
+  precipitationProb: number;
 }
 
 const PRESET_COLORS = [
@@ -107,6 +114,7 @@ function ColorPickerPopup({
 
 export default function ParcelasPage() {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
+  const [climate, setClimate] = useState<Record<string, ClimateSummary | null>>({});
   const [loading, setLoading] = useState(true);
   const [editingColor, setEditingColor] = useState<string | null>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
@@ -117,6 +125,12 @@ export default function ParcelasPage() {
       .then(setParcelas)
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Clima en vivo para las tarjetas (no bloquea el render de la lista)
+    fetch("/api/parcelas/climate-summary")
+      .then((r) => r.json())
+      .then((data) => setClimate(data ?? {}))
+      .catch(() => setClimate({}));
   }, []);
 
   async function updateColor(id: string, color: string) {
@@ -185,6 +199,34 @@ export default function ParcelasPage() {
                       title="Cambiar color"
                     />
                   </div>
+
+                  {/* Clima actual (en vivo desde Open-Meteo) */}
+                  <Link href={`/parcelas/${p.id}`} className="block">
+                    {climate[p.id] ? (
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-4 text-sm">
+                        <span className="flex items-center gap-1 text-gray-700" title="Temperatura">
+                          <Thermometer size={15} className="text-orange-500" />
+                          {Math.round(climate[p.id]!.temperature)}°C
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-700" title="Humedad">
+                          <Droplets size={15} className="text-blue-500" />
+                          {Math.round(climate[p.id]!.humidity)}%
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-700" title="Prob. lluvia">
+                          <CloudRain size={15} className="text-cyan-500" />
+                          {Math.round(climate[p.id]!.precipitationProb)}%
+                        </span>
+                      </div>
+                    ) : climate[p.id] === null ? (
+                      <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">
+                        Clima no disponible
+                      </div>
+                    ) : (
+                      <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="h-4 skeleton w-32" />
+                      </div>
+                    )}
+                  </Link>
                 </div>
               </div>
             );

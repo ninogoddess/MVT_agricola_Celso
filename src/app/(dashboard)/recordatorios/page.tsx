@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2 } from "lucide-react";
+import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2, RotateCcw } from "lucide-react";
 import { NotificationBanner } from "@/components/ui/AppBanners";
 import { useNotifications } from "@/hooks/useNotifications";
 
@@ -36,7 +36,7 @@ export default function RecordatoriosPage() {
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [tab, setTab] = useState<"pending" | "completed">("pending");
+  const [tab, setTab] = useState<"pending" | "history">("pending");
   const [formData, setFormData] = useState({ parcelaId: "", cultivoId: "", taskType: "", scheduledAt: "" });
   const [formError, setFormError] = useState("");
   const { scheduleReminder } = useNotifications();
@@ -72,9 +72,13 @@ export default function RecordatoriosPage() {
     ? cultivos.filter((c) => c.parcela_id === formData.parcelaId && (c.status === undefined || (c.status !== 'harvested' && c.status !== 'lost')))
     : [];
 
-  async function markComplete(id: string) {
-    await fetch(`/api/reminders/${id}/complete`, { method: "PATCH" });
-    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r));
+  async function setStatus(id: string, status: "completed" | "pending") {
+    await fetch(`/api/reminders/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
   }
 
   async function deleteReminder(id: string) {
@@ -136,9 +140,14 @@ export default function RecordatoriosPage() {
 
   if (loading) return <div className="h-48 skeleton rounded-xl" />;
 
-  const pending = reminders.filter((r) => r.status !== "completed");
-  const completed = reminders.filter((r) => r.status === "completed");
-  const displayed = tab === "pending" ? pending : completed;
+  const now = Date.now();
+  const isExpired = (r: Reminder) => new Date(r.scheduled_at).getTime() < now;
+
+  // Pendientes: no completados y aún vigentes (no vencidos).
+  const pending = reminders.filter((r) => r.status !== "completed" && !isExpired(r));
+  // Historial: completados o vencidos sin completar.
+  const history = reminders.filter((r) => r.status === "completed" || (r.status !== "completed" && isExpired(r)));
+  const displayed = tab === "pending" ? pending : history;
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -225,11 +234,11 @@ export default function RecordatoriosPage() {
           }`}>
           Pendientes ({pending.length})
         </button>
-        <button onClick={() => setTab("completed")}
+        <button onClick={() => setTab("history")}
           className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
-            tab === "completed" ? "border-green-600 text-green-700" : "border-transparent text-gray-500 hover:text-gray-700"
+            tab === "history" ? "border-green-600 text-green-700" : "border-transparent text-gray-500 hover:text-gray-700"
           }`}>
-          Completados ({completed.length})
+          Historial ({history.length})
         </button>
       </div>
 
@@ -238,7 +247,7 @@ export default function RecordatoriosPage() {
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
           <CalendarCheck size={40} className={`mx-auto mb-3 ${tab === "pending" ? "text-gray-300" : "text-green-400"}`} />
           <p className="text-gray-500">
-            {tab === "pending" ? "No hay recordatorios pendientes" : "No hay recordatorios completados"}
+            {tab === "pending" ? "No hay recordatorios pendientes" : "No hay recordatorios en el historial"}
           </p>
         </div>
       ) : (
@@ -246,19 +255,22 @@ export default function RecordatoriosPage() {
           {displayed.map((reminder) => {
             const cultivoName = getCultivoDisplayName(reminder.cultivo_id);
             const parcela = parcelas.find((p) => p.id === reminder.parcela_id);
-            
+            const expired = isExpired(reminder) && reminder.status !== "completed";
+
             return (
               <div key={reminder.id}
                 className={`bg-white rounded-xl border p-4 flex items-center justify-between animate-fade-in-up card-hover ${
-                  reminder.status === "upcoming" ? "border-amber-300 bg-amber-50" :
-                  reminder.status === "completed" ? "border-gray-100 opacity-75" : "border-gray-200"
+                  reminder.status === "completed" ? "border-gray-100 opacity-75" :
+                  expired ? "border-red-200 bg-red-50/50" :
+                  reminder.status === "upcoming" ? "border-amber-300 bg-amber-50" : "border-gray-200"
                 }`}>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-gray-800 flex items-center gap-2 flex-wrap">
                     <span>{taskIcon(reminder.task_type)}</span>
                     <span className="capitalize">{reminder.task_type}</span>
-                    {reminder.status === "upcoming" && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Próximo</span>}
+                    {reminder.status === "upcoming" && !expired && <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">Próximo</span>}
                     {reminder.status === "completed" && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full flex items-center gap-1"><CheckCircle size={10} /> Completado</span>}
+                    {expired && <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full">Vencido</span>}
                     {reminder.source === "auto" && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full">Auto</span>}
                     {reminder.source === "manual" && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Manual</span>}
                   </div>
@@ -277,10 +289,17 @@ export default function RecordatoriosPage() {
                 </div>
 
                 <div className="flex gap-2 ml-3 flex-shrink-0">
-                  {reminder.status !== "completed" && (
-                    <button onClick={() => markComplete(reminder.id)}
+                  {reminder.status !== "completed" ? (
+                    <button onClick={() => setStatus(reminder.id, "completed")}
+                      title="Marcar como completado"
                       className="px-3 py-2 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
                       <CheckCircle size={16} />
+                    </button>
+                  ) : (
+                    <button onClick={() => setStatus(reminder.id, "pending")}
+                      title="Marcar como pendiente"
+                      className="px-3 py-2 text-sm bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 min-h-[44px] min-w-[44px] flex items-center justify-center">
+                      <RotateCcw size={16} />
                     </button>
                   )}
                   {reminder.source === "manual" && (

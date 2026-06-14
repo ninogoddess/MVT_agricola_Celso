@@ -5,15 +5,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard, Map, Bell, CalendarCheck, Settings, LogOut, Menu, X, Lightbulb
+  LayoutDashboard, Map, Bell, CalendarCheck, Settings, LogOut, Menu, X, Lightbulb, Briefcase, Sun
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dia-a-dia", label: "Día a día", icon: Sun },
   { href: "/parcelas", label: "Parcelas", icon: Map },
   { href: "/recomendaciones-globales", label: "Recomendaciones", icon: Lightbulb },
   { href: "/alertas", label: "Alertas", icon: Bell },
   { href: "/recordatorios", label: "Recordatorios", icon: CalendarCheck },
+  { href: "/negocios", label: "Negocios", icon: Briefcase },
   { href: "/ajustes", label: "Ajustes", icon: Settings },
 ];
 

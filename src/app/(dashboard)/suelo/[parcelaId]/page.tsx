@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import CropSuggestions from "@/components/soil/CropSuggestions";
 
 interface SoilData {
   id: string;
@@ -60,6 +61,9 @@ export default function SueloPage() {
           + Registro
         </button>
       </div>
+
+      {/* Recomendación de cultivos según suelo + geografía + clima */}
+      <CropSuggestions parcelaId={parcelaId} />
 
       {showForm && (
         <form onSubmit={addSoilData} className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">

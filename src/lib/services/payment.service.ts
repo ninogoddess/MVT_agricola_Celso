@@ -61,6 +61,7 @@ export class PaymentService {
       preapproval_id: result.id,
       plan_id: planId,
       price: priceClp,
+      payer_email: payerEmail,
     });
 
     return {

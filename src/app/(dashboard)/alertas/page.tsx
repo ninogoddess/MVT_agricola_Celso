@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Thermometer, Droplets, CloudRain, CheckCircle, Bell, BadgeAlert } from "lucide-react";
+import Link from "next/link";
+import { Thermometer, Droplets, CloudRain, CheckCircle, Bell, BadgeAlert, Snowflake, Flame, Sigma, ArrowRight } from "lucide-react";
 
 interface Alert {
   id: string;
@@ -42,6 +43,44 @@ export default function AlertasPage() {
   return (
     <div className="space-y-4 animate-fade-in-up">
       <h1 className="text-2xl font-bold text-gray-800">Alertas</h1>
+
+      {/* Herramientas de prevención climática */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <Link href="/alertas/heladas"
+          className="group bg-white rounded-2xl border-2 border-sky-200 p-5 flex flex-col card-hover transition-all">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-sky-50 flex items-center justify-center">
+              <Snowflake size={20} className="text-sky-600" />
+            </div>
+            <Flame size={18} className="text-orange-500" />
+          </div>
+          <h2 className="font-bold text-gray-900">Heladas y golpe de calor</h2>
+          <p className="text-sm text-gray-600 mt-1 flex-1">
+            Revisa el pronóstico de 7 días de cada parcela y anticipa días con frío o calor extremo
+            que pueden dañar tus cultivos.
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-sky-700 mt-3">
+            Ver pronóstico <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </Link>
+
+        <Link href="/alertas/gdd"
+          className="group bg-white rounded-2xl border-2 border-amber-200 p-5 flex flex-col card-hover transition-all">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center mb-2">
+            <Sigma size={20} className="text-amber-600" />
+          </div>
+          <h2 className="font-bold text-gray-900">Grados-día y horas-frío</h2>
+          <p className="text-sm text-gray-600 mt-1 flex-1">
+            Acumulación térmica que ayuda a estimar el desarrollo de tus cultivos y a predecir
+            floración o cosecha en frutales.
+          </p>
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 mt-3">
+            Ver acumulación <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </Link>
+      </div>
+
+      <h2 className="font-semibold text-gray-800 pt-2">Alertas activas</h2>
 
       {alerts.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-lg border border-gray-200">

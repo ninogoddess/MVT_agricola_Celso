@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { MapPin, Sprout, FlaskConical, Lightbulb, CalendarCheck, CloudSun } from "lucide-react";
 import { useReverseGeocode } from "@/hooks/useReverseGeocode";
+import ClimateChart from "@/components/parcelas/ClimateChart";
 
 export default function ParcelaDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -104,6 +105,9 @@ export default function ParcelaDetailPage() {
           <p className="text-gray-500 text-sm">Sin datos climáticos aún. Los datos se actualizan diariamente.</p>
         )}
       </div>
+
+      {/* Gráfico de clima: 7 días pasados + 7 de pronóstico */}
+      <ClimateChart parcelaId={id} />
 
       {/* Cultivos */}
       <div className="bg-white rounded-lg border border-gray-200 p-4">
