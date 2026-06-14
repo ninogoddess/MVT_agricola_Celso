@@ -26,16 +26,23 @@ export async function POST(request: Request) {
       // Crear la preferencia usando el PaymentService
       const paymentService = new PaymentService(ctx.supabase);
 
-      // ⚠️ TEMPORAL - SOLO PRUEBAS DE MERCADO PAGO ⚠️
-      // El "payer" (comprador) debe ser un usuario de PRUEBA para que coincida con
-      // el "collector" (vendedor de prueba), de lo contrario MP responde:
+      // Email del comprador (payer).
+      //
+      // En PRUEBAS, tanto el comprador como el vendedor deben ser usuarios de
+      // prueba de la MISMA aplicación de Mercado Pago, de lo contrario MP responde:
       // "Both payer and collector must be real or test users".
-      // Forzamos el email del COMPRADOR de prueba.
-      // Se puede sobreescribir con la env var MP_TEST_PAYER_EMAIL en Vercel.
-      // 🔴 REVERTIR a `ctx.user.email` antes de pasar a PRODUCCIÓN. 🔴
-      const payerEmail =
-        process.env.MP_TEST_PAYER_EMAIL ||
-        'TESTUSER2412276628925994615@testuser.com';
+      //
+      // Para poder probar con VARIOS usuarios de prueba, registra cada cuenta de la
+      // app usando el email de un usuario de prueba (TESTUSERxxxx@testuser.com) y
+      // este checkout usará automáticamente ese email.
+      //
+      // `MP_TEST_PAYER_EMAIL` queda como override opcional para forzar un comprador
+      // de prueba puntual. En PRODUCCIÓN no se define y se usa el email real.
+      const payerEmail = process.env.MP_TEST_PAYER_EMAIL || ctx.user.email;
+
+      if (!payerEmail) {
+        return NextResponse.json({ error: 'No se pudo determinar el email del comprador' }, { status: 400 });
+      }
 
       const { sandboxInitPoint, preapprovalId } = await paymentService.createSubscriptionCheckout(
         ctx.tenantId,

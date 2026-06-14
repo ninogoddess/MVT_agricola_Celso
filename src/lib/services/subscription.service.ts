@@ -54,11 +54,13 @@ export class SubscriptionService {
 
     const limit = sub.plan.max_crops;
 
+    // La tabla `cultivos` usa la columna `status` ('active' | 'harvested' | 'lost'),
+    // no `is_active`. Contamos solo los cultivos activos del tenant.
     const { count, error } = await this.supabase
       .from('cultivos')
       .select('*', { count: 'exact', head: true })
       .eq('tenant_id', this.tenantId)
-      .eq('is_active', true);
+      .eq('status', 'active');
 
     if (error) throw error;
     if (count !== null && count >= limit) {
@@ -72,25 +74,16 @@ export class SubscriptionService {
 
     const limit = sub.plan.max_reminders;
 
-    // Recordatorios están asociados a cultivos. Debemos contar cuántos recordatorios activos hay en el tenant.
-    // Como recordatorios no tiene tenant_id directamente, unimos por cultivo
-    const { data, error } = await this.supabase
-      .from('cultivos')
-      .select('id, recordatorios(id)')
+    // La tabla `reminders` tiene `tenant_id` directo. Contamos los recordatorios
+    // vigentes (no completados) del tenant.
+    const { count, error } = await this.supabase
+      .from('reminders')
+      .select('*', { count: 'exact', head: true })
       .eq('tenant_id', this.tenantId)
-      .eq('is_active', true);
+      .neq('status', 'completed');
 
     if (error) throw error;
-
-    let totalReminders = 0;
-    data?.forEach(cultivo => {
-      // Asumiendo que recordatorios es un arreglo
-      if (Array.isArray(cultivo.recordatorios)) {
-        totalReminders += cultivo.recordatorios.length;
-      }
-    });
-
-    if (totalReminders >= limit) {
+    if (count !== null && count >= limit) {
       throw new LimitExceededError('recordatorios');
     }
   }

@@ -90,9 +90,21 @@ interface PlanesViewProps {
   modal?: boolean;
 }
 
+const PLAN_ORDER: Record<string, number> = { free: 0, pro: 1, organizacion: 2 };
+
 export default function PlanesView({ currentPlan = "free", onClose, modal = false }: PlanesViewProps) {
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Etiqueta dinámica del botón según el plan actual del usuario.
+  const getCtaLabel = (plan: Plan) => {
+    if (plan.id === "organizacion") return "Próximamente";
+    if (plan.id === currentPlan) return "Plan actual";
+    if (plan.id === "free") return "Cambiar a Gratis";
+    return PLAN_ORDER[plan.id] > PLAN_ORDER[currentPlan]
+      ? `Mejorar a ${plan.name}`
+      : `Cambiar a ${plan.name}`;
+  };
 
   const handleUpgrade = async (planId: string) => {
     try {
@@ -116,6 +128,31 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
       setError(err.message);
       setLoadingPlan(null);
     }
+  };
+
+  const handleDowngrade = async () => {
+    if (!confirm("¿Seguro que quieres volver al plan Gratis? Se cancelará tu suscripción de pago.")) return;
+    try {
+      setLoadingPlan("free");
+      setError(null);
+
+      const res = await fetch('/api/subscription/cancel', { method: 'POST' });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Error al cambiar de plan');
+
+      // Recargar para reflejar el nuevo plan actual.
+      window.location.reload();
+    } catch (err: any) {
+      setError(err.message);
+      setLoadingPlan(null);
+    }
+  };
+
+  const handleAction = (plan: Plan) => {
+    if (plan.id === currentPlan || plan.id === "organizacion") return;
+    if (plan.id === "free") return handleDowngrade();
+    return handleUpgrade(plan.id);
   };
 
   return (
@@ -193,7 +230,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
 
                 {/* CTA */}
                 <button
-                  onClick={() => { if (!isCurrent && !isComingSoon) handleUpgrade(plan.id); }}
+                  onClick={() => handleAction(plan)}
                   disabled={isCurrent || loadingPlan !== null || isComingSoon}
                   className={`w-full py-3 rounded-xl font-semibold text-sm transition-all min-h-[44px] flex items-center justify-center gap-2 ${
                     isCurrent || isComingSoon
@@ -203,7 +240,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
                       : `${plan.bgColor} ${plan.color} border-2 ${plan.borderColor} hover:opacity-80`
                   }`}
                 >
-                  {loadingPlan === plan.id ? <Loader2 size={16} className="animate-spin" /> : isCurrent ? "Plan actual" : isComingSoon ? "Próximamente" : plan.cta}
+                  {loadingPlan === plan.id ? <Loader2 size={16} className="animate-spin" /> : getCtaLabel(plan)}
                   {!isCurrent && !isComingSoon && loadingPlan !== plan.id && <ArrowRight size={15} />}
                 </button>
               </div>
