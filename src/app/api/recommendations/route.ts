@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import { withTenantContext } from '@/lib/middleware/tenant-filter';
+import { fetchClimateData } from '@/lib/utils/climate-api';
+import { suggestCrops, type CropParamRow } from '@/lib/utils/crop-suitability';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/recommendations
@@ -23,7 +27,8 @@ export async function GET() {
       return NextResponse.json({ recommendations: [], summary: null });
     }
 
-    // Obtener último clima de cada parcela
+    // Obtener último clima de cada parcela. Si el cron aún no ha guardado un
+    // snapshot, consultamos Open-Meteo en vivo para no quedarnos sin datos.
     const climatePromises = parcelas.map(async (p) => {
       const { data } = await supabase
         .from('climate_data')
@@ -33,7 +38,23 @@ export async function GET() {
         .order('fetched_at', { ascending: false })
         .limit(1)
         .maybeSingle();
-      return { parcela: p, climate: data };
+
+      if (data) return { parcela: p, climate: data };
+
+      // Respaldo en vivo (datos reales según la ubicación de la parcela).
+      const live = await fetchClimateData(Number(p.latitude), Number(p.longitude));
+      if (!live) return { parcela: p, climate: null };
+      return {
+        parcela: p,
+        climate: {
+          temperature_celsius: live.temperature,
+          relative_humidity_percent: live.humidity,
+          precipitation_probability_percent: live.precipitationProb,
+          wind_speed_kmh: live.windSpeed,
+          forecast_72h: live.forecast72h,
+          fetched_at: new Date().toISOString(),
+        },
+      };
     });
 
     const climateResults = await Promise.all(climatePromises);
@@ -60,6 +81,11 @@ export async function GET() {
 
     const soilResults = await Promise.all(soilPromises);
     const soilMap = Object.fromEntries(soilResults.map((s) => [s.parcelaId, s.soil]));
+
+    // Parámetros de cultivos (para la sugerencia de qué plantar según el suelo).
+    const { data: cropParamsAll } = await supabase
+      .from('crop_parameters')
+      .select('species, variety, temp_optima_min, temp_optima_max, humedad_suelo_optima_min, humedad_suelo_optima_max, hemisferio_sur_meses_siembra, hemisferio_norte_meses_siembra, dias_a_cosecha, notes');
 
     // Generar recomendaciones para cada parcela
     const recommendations = [];
@@ -205,6 +231,36 @@ export async function GET() {
           icon: 'flask',
           soilData: { nitrogen: soil.nitrogen_level },
         });
+      }
+
+      // ── CULTIVOS RECOMENDADOS SEGÚN EL SUELO ───────────────────────
+      if (soil && (cropParamsAll?.length ?? 0) > 0) {
+        const suggestions = suggestCrops({
+          crops: cropParamsAll as CropParamRow[],
+          soil: {
+            ph: Number(soil.ph),
+            humidityPercent: Number(soil.humidity_percent),
+            nitrogenLevel: soil.nitrogen_level != null ? Number(soil.nitrogen_level) : null,
+          },
+          latitude: Number(parcela.latitude),
+          currentTemperature: temp,
+          now: new Date(),
+        }, 4);
+
+        if (suggestions.length > 0) {
+          recommendations.push({
+            id: `suelo-${parcela.id}`,
+            parcelaId: parcela.id,
+            parcelaName: parcela.name,
+            type: 'siembra',
+            priority: 'low',
+            title: 'Cultivos recomendados para tu suelo',
+            description: `Según tu último análisis de suelo (pH ${Number(soil.ph)}, humedad ${Number(soil.humidity_percent)}%) y la ubicación de la parcela, estos cultivos aprovecharían mejor las condiciones actuales.`,
+            climate: { temp, humidity, precipProb, wind },
+            icon: 'sprout',
+            suggestedCrops: suggestions.map((s) => s.species),
+          });
+        }
       }
 
       // ── CULTIVOS PRÓXIMOS A COSECHA ─────────────────────────────────

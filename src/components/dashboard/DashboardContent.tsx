@@ -3,9 +3,32 @@
 import { useEffect, useState } from "react";
 import {
   Map, Sprout, Bell, CalendarCheck, Plus, AlertTriangle,
-  Droplets, Scissors, FlaskConical
+  Droplets, Scissors, FlaskConical, Thermometer, CloudRain, MapPin
 } from "lucide-react";
 import { NotificationBanner, InstallAppBanner } from "@/components/ui/AppBanners";
+
+interface ClimateSummary { temperature: number; humidity: number; windSpeed: number; precipitationProb: number; }
+
+// Muestra la ubicación de la parcela en palabras (reverse geocoding gratuito).
+function LocationBadge({ lat, lon }: { lat: number; lon: number }) {
+  const [location, setLocation] = useState<string | null>(null);
+  useEffect(() => {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`)
+      .then((r) => r.json())
+      .then((d) => {
+        const a = d.address ?? {};
+        const parts = [a.village || a.town || a.city || a.municipality || a.suburb, a.state].filter(Boolean);
+        setLocation(parts.join(", ") || null);
+      })
+      .catch(() => null);
+  }, [lat, lon]);
+  return (
+    <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+      <MapPin size={12} className="flex-shrink-0" />
+      <span className="truncate">{location ?? `${lat.toFixed(4)}, ${lon.toFixed(4)}`}</span>
+    </div>
+  );
+}
 
 interface DashboardData {
   summary: { activeParcelas: number; activeCultivos: number; pendingAlerts: number; upcomingReminders: number };
@@ -17,6 +40,7 @@ interface DashboardData {
 // ---- Main Dashboard ----
 export default function DashboardContent() {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [climate, setClimate] = useState<Record<string, ClimateSummary | null>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,6 +49,12 @@ export default function DashboardContent() {
       .then(setData)
       .catch(console.error)
       .finally(() => setLoading(false));
+
+    // Clima en vivo para las tarjetas de parcela.
+    fetch("/api/parcelas/climate-summary")
+      .then((r) => r.json())
+      .then((d) => setClimate(d ?? {}))
+      .catch(() => setClimate({}));
   }, []);
 
   if (loading) {
@@ -119,10 +149,30 @@ export default function DashboardContent() {
                 className="block bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                 <div className="h-1.5" style={{ backgroundColor: p.color ?? "#16a34a" }} />
                 <div className="p-4">
-                  <h3 className="font-medium text-gray-800">{p.name}</h3>
-                  <p className="text-xs text-gray-400 mt-1 font-mono">
-                    {Number(p.latitude).toFixed(4)}, {Number(p.longitude).toFixed(4)}
-                  </p>
+                  <h3 className="font-medium text-gray-800 truncate">{p.name}</h3>
+                  <LocationBadge lat={Number(p.latitude)} lon={Number(p.longitude)} />
+
+                  {/* Clima en vivo */}
+                  {climate[p.id] ? (
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-4 text-sm">
+                      <span className="flex items-center gap-1 text-gray-700" title="Temperatura">
+                        <Thermometer size={15} className="text-orange-500" />
+                        {Math.round(climate[p.id]!.temperature)}°C
+                      </span>
+                      <span className="flex items-center gap-1 text-gray-700" title="Humedad">
+                        <Droplets size={15} className="text-blue-500" />
+                        {Math.round(climate[p.id]!.humidity)}%
+                      </span>
+                      <span className="flex items-center gap-1 text-gray-700" title="Prob. lluvia">
+                        <CloudRain size={15} className="text-cyan-500" />
+                        {Math.round(climate[p.id]!.precipitationProb)}%
+                      </span>
+                    </div>
+                  ) : climate[p.id] === null ? (
+                    <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-400">Clima no disponible</div>
+                  ) : (
+                    <div className="mt-3 pt-3 border-t border-gray-100"><div className="h-4 skeleton w-32" /></div>
+                  )}
                 </div>
               </a>
             ))}
