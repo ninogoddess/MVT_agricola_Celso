@@ -104,11 +104,6 @@ export default function AjustesPage() {
                 {account?.createdAt ? new Date(account.createdAt).toLocaleDateString("es-CL", { day: "2-digit", month: "long", year: "numeric" }) : "—"}
               </p>
             </div>
-            {account?.provider && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full capitalize flex-shrink-0">
-                {account.provider === "google" ? "Google" : "Correo"}
-              </span>
-            )}
           </div>
         </div>
       </section>
