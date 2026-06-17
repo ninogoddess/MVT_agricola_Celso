@@ -88,3 +88,51 @@ button:active { transform: scale(0.97); }
   animation: shimmer 1.4s infinite linear;
   border-radius: 8px;
 }
+
+/* ── Refinamientos de fluidez y accesibilidad ── */
+
+/* Desplazamiento suave y sin resaltado azul al tocar en móvil */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Foco visible y accesible (teclado) con el verde de marca */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Transiciones suaves en campos de formulario */
+input, select, textarea {
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* Hover sutil en filas de tabla y elementos de lista interactivos */
+tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+/* Aparición suave de imágenes al cargar */
+img {
+  transition: opacity 0.3s ease;
+}
+
+/* ── Pop sutil (badges/indicadores nuevos) ── */
+@keyframes popIn {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.animate-pop-in { animation: popIn 0.25s ease both; }
+
+/* ── Respeto por usuarios que prefieren menos movimiento ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
