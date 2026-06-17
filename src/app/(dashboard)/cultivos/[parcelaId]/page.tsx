@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Sprout, CheckCircle2, Lightbulb, CalendarDays } from "lucide-react";
 import { UpgradeModal } from "@/components/ui/Modals";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Cultivo {
   id: string;
@@ -53,6 +55,8 @@ export default function CultivosPage() {
   const [isAlreadyPlanted, setIsAlreadyPlanted] = useState(false);
   const [formError, setFormError] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const toast = useToast();
+  usePageTitle("Cultivos");
 
   const species = Array.from(new Set(cropParams.map((c) => c.species))).sort();
   const varieties = cropParams
@@ -112,6 +116,7 @@ export default function CultivosPage() {
       setCultivos((prev) => [newCultivo, ...prev]);
       setShowForm(false);
       setCultivoName(""); setSelectedSpecies(""); setSelectedVariety(""); setPlantingDate(""); setIsAlreadyPlanted(false);
+      toast.success("Cultivo agregado");
     } else {
       const d = await res.json();
       if (d.code === "LIMIT_EXCEEDED") {
@@ -124,12 +129,13 @@ export default function CultivosPage() {
   }
 
   async function changeStatus(id: string, status: string) {
+    setCultivos((prev) => prev.map((c) => c.id === id ? { ...c, status } : c)); // optimista
     await fetch(`/api/cultivos/${id}/status`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    setCultivos((prev) => prev.map((c) => c.id === id ? { ...c, status } : c));
+    toast.success(status === "harvested" ? "Cultivo marcado como cosechado" : "Cultivo marcado como perdido");
   }
 
   if (loading) return <div className="h-48 skeleton rounded-xl" />;

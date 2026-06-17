@@ -6,6 +6,7 @@ import {
   Wheat, FlaskConical, AlertTriangle, Info, CheckCircle,
   RefreshCw, BarChart3, MapPin, TrendingUp
 } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Recommendation {
   id: string;
@@ -147,6 +148,7 @@ function RecoCard({ rec, index }: { rec: Recommendation; index: number }) {
 
 // ─── Page ───────────────────────────────────────────────────────
 export default function RecomendacionesGlobalesPage() {
+  usePageTitle("Recomendaciones");
   const [data, setData] = useState<{ recommendations: Recommendation[]; summary: Summary | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "high" | "riego" | "siembra" | "cosecha" | "fertilizacion">("all");

@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2, RotateCcw } from "lucide-react";
+import { CalendarCheck, Droplets, Scissors, FlaskConical, Plus, CheckCircle, Trash2, RotateCcw, RefreshCw } from "lucide-react";
 import { NotificationBanner } from "@/components/ui/AppBanners";
 import { useNotifications } from "@/hooks/useNotifications";
-import { UpgradeModal } from "@/components/ui/Modals";
+import { UpgradeModal, ConfirmModal } from "@/components/ui/Modals";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Reminder {
   id: string;
@@ -41,10 +44,14 @@ export default function RecordatoriosPage() {
   const [formData, setFormData] = useState({ parcelaId: "", cultivoId: "", taskType: "", scheduledAt: "" });
   const [formError, setFormError] = useState("");
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const { scheduleReminder } = useNotifications();
+  const toast = useToast();
+  usePageTitle("Recordatorios");
 
-  useEffect(() => {
-    Promise.all([
+  function loadData() {
+    return Promise.all([
       fetch("/api/reminders").then((r) => r.json()),
       fetch("/api/parcelas").then((r) => r.json()),
     ])
@@ -52,22 +59,28 @@ export default function RecordatoriosPage() {
         setReminders(rem.data ?? []);
         const parcelasList = Array.isArray(parc) ? parc : [];
         setParcelas(parcelasList);
-        
-        // Cargar cultivos de todas las parcelas
         if (parcelasList.length > 0) {
-          Promise.all(
-            parcelasList.map((p: Parcela) => 
+          return Promise.all(
+            parcelasList.map((p: Parcela) =>
               fetch(`/api/parcelas/${p.id}/cultivos`).then((r) => r.json())
             )
-          ).then((cultivosArrays) => {
-            const allCultivos = cultivosArrays.flat();
-            setCultivos(allCultivos);
-          });
+          ).then((cultivosArrays) => setCultivos(cultivosArrays.flat()));
         }
       })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(console.error);
+  }
+
+  useEffect(() => {
+    loadData().finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+    toast.info("Recordatorios actualizados");
+  }
 
   // Cultivos filtrados por parcela seleccionada
   const cultivosFiltrados = formData.parcelaId 
@@ -75,17 +88,27 @@ export default function RecordatoriosPage() {
     : [];
 
   async function setStatus(id: string, status: "completed" | "pending") {
+    // Optimista: refleja el cambio al instante.
+    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
     await fetch(`/api/reminders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     });
-    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
+    toast.success(status === "completed" ? "Tarea marcada como completada" : "Tarea marcada como pendiente");
   }
 
-  async function deleteReminder(id: string) {
+  function confirmDelete(id: string) {
+    setDeleteId(id);
+  }
+
+  async function deleteReminder() {
+    if (!deleteId) return;
+    const id = deleteId;
+    setReminders((prev) => prev.filter((r) => r.id !== id)); // optimista
+    setDeleteId(null);
     await fetch(`/api/reminders/${id}`, { method: "DELETE" });
-    setReminders((prev) => prev.filter((r) => r.id !== id));
+    toast.success("Recordatorio eliminado");
   }
 
   async function createManual(e: React.FormEvent) {
@@ -122,6 +145,7 @@ export default function RecordatoriosPage() {
 
       setShowForm(false);
       setFormData({ parcelaId: "", cultivoId: "", taskType: "", scheduledAt: "" });
+      toast.success("Recordatorio creado");
     } else {
       const d = await res.json();
       if (d.code === "LIMIT_EXCEEDED") {
@@ -160,10 +184,17 @@ export default function RecordatoriosPage() {
     <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Recordatorios</h1>
-        <button onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 min-h-[44px] flex items-center gap-2">
-          <Plus size={18} /> Manual
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={handleRefresh} disabled={refreshing}
+            title="Actualizar"
+            className="px-3 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50">
+            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+          </button>
+          <button onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 min-h-[44px] flex items-center gap-2">
+            <Plus size={18} /> Manual
+          </button>
+        </div>
       </div>
 
       {/* Notification + Install banners */}
@@ -251,12 +282,16 @@ export default function RecordatoriosPage() {
 
       {/* Lista */}
       {displayed.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <CalendarCheck size={40} className={`mx-auto mb-3 ${tab === "pending" ? "text-gray-300" : "text-green-400"}`} />
-          <p className="text-gray-500">
-            {tab === "pending" ? "No hay recordatorios pendientes" : "No hay recordatorios en el historial"}
-          </p>
-        </div>
+        <EmptyState
+          icon={CalendarCheck}
+          tone={tab === "pending" ? "neutral" : "success"}
+          title={tab === "pending" ? "No hay tareas pendientes" : "No hay nada en el historial"}
+          description={tab === "pending"
+            ? "Crea un recordatorio manual o espera las sugerencias automáticas del sistema."
+            : "Aquí verás las tareas completadas y las que ya pasaron de fecha."}
+          actionLabel={tab === "pending" ? "Crear recordatorio" : undefined}
+          onAction={tab === "pending" ? () => setShowForm(true) : undefined}
+        />
       ) : (
         <div className="space-y-3">
           {displayed.map((reminder) => {
@@ -310,7 +345,7 @@ export default function RecordatoriosPage() {
                     </button>
                   )}
                   {reminder.source === "manual" && (
-                    <button onClick={() => deleteReminder(reminder.id)}
+                    <button onClick={() => confirmDelete(reminder.id)}
                       className="px-3 py-2 text-sm bg-red-50 text-red-500 rounded-lg hover:bg-red-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
                       <Trash2 size={16} />
                     </button>
@@ -323,6 +358,15 @@ export default function RecordatoriosPage() {
       )}
 
       <UpgradeModal open={showUpgrade} resource="recordatorios" onClose={() => setShowUpgrade(false)} />
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Eliminar recordatorio"
+        message="¿Seguro que quieres eliminar este recordatorio? Esta acción no se puede deshacer."
+        confirmLabel="Sí, eliminar"
+        danger
+        onConfirm={deleteReminder}
+        onClose={() => setDeleteId(null)}
+      />
     </div>
   );
 }

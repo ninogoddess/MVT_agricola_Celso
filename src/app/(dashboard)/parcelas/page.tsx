@@ -2,7 +2,10 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { MapPin, Layers, Plus, Thermometer, Droplets, CloudRain } from "lucide-react";
+import { MapPin, Layers, Plus, Thermometer, Droplets, CloudRain, RefreshCw } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Parcela {
   id: string;
@@ -117,21 +120,38 @@ export default function ParcelasPage() {
   const [climate, setClimate] = useState<Record<string, ClimateSummary | null>>({});
   const [loading, setLoading] = useState(true);
   const [editingColor, setEditingColor] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const toast = useToast();
+  usePageTitle("Parcelas");
 
-  useEffect(() => {
-    fetch("/api/parcelas")
+  function loadParcelas() {
+    return fetch("/api/parcelas")
       .then((r) => r.json())
       .then(setParcelas)
-      .catch(console.error)
-      .finally(() => setLoading(false));
+      .catch(console.error);
+  }
 
-    // Clima en vivo para las tarjetas (no bloquea el render de la lista)
-    fetch("/api/parcelas/climate-summary")
+  function loadClimate() {
+    return fetch("/api/parcelas/climate-summary")
       .then((r) => r.json())
       .then((data) => setClimate(data ?? {}))
       .catch(() => setClimate({}));
+  }
+
+  useEffect(() => {
+    loadParcelas().finally(() => setLoading(false));
+    loadClimate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    setClimate({});
+    await Promise.all([loadParcelas(), loadClimate()]);
+    setRefreshing(false);
+    toast.info("Parcelas actualizadas");
+  }
 
   async function updateColor(id: string, color: string) {
     await fetch(`/api/parcelas/${id}`, {
@@ -141,6 +161,7 @@ export default function ParcelasPage() {
     });
     setParcelas((prev) => prev.map((p) => p.id === id ? { ...p, color } : p));
     setEditingColor(null);
+    toast.success("Color actualizado");
   }
 
   if (loading) {
@@ -160,18 +181,27 @@ export default function ParcelasPage() {
     <div className="space-y-4 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">Parcelas</h1>
-        <Link href="/parcelas/new"
-          className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px] flex items-center gap-2">
-          <Plus size={18} /> Nueva
-        </Link>
+        <div className="flex items-center gap-2">
+          <button onClick={handleRefresh} disabled={refreshing}
+            title="Actualizar"
+            className="px-3 py-2.5 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-50">
+            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+          </button>
+          <Link href="/parcelas/new"
+            className="px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors min-h-[44px] flex items-center gap-2">
+            <Plus size={18} /> Nueva
+          </Link>
+        </div>
       </div>
 
       {parcelas.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Layers size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 mb-3">No tienes parcelas registradas</p>
-          <Link href="/parcelas/new" className="text-green-600 font-medium hover:underline">Crear primera parcela</Link>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Aún no tienes parcelas"
+          description="Registra tu primera parcela con la ubicación de tu campo para recibir clima y recomendaciones."
+          actionLabel="Crear primera parcela"
+          onAction={() => { window.location.href = "/parcelas/new"; }}
+        />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {parcelas.map((p) => {

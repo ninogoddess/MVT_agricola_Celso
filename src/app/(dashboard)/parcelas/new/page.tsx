@@ -4,14 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { MapPin, Locate } from "lucide-react";
 import { UpgradeModal } from "@/components/ui/Modals";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 export default function NewParcelaPage() {
   const router = useRouter();
+  const toast = useToast();
+  usePageTitle("Nueva parcela");
   const [name, setName] = useState("");
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [areaHectares, setAreaHectares] = useState("");
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; location?: string; area?: string }>({});
   const [loading, setLoading] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
   const [locationName, setLocationName] = useState("");
@@ -67,6 +72,15 @@ export default function NewParcelaPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+
+    // Validación visual inline
+    const errs: { name?: string; location?: string; area?: string } = {};
+    if (!name.trim()) errs.name = "Escribe un nombre para identificar la parcela";
+    if (!latitude || !longitude) errs.location = "Toca el botón para capturar la ubicación";
+    if (!areaHectares || Number(areaHectares) <= 0) errs.area = "Ingresa la superficie en hectáreas";
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
     setLoading(true);
 
     try {
@@ -94,6 +108,7 @@ export default function NewParcelaPage() {
         return;
       }
 
+      toast.success("¡Parcela creada con éxito!");
       router.push("/parcelas");
     } catch {
       setError("Error de conexión");
@@ -115,9 +130,10 @@ export default function NewParcelaPage() {
 
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
-          <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          <input id="name" type="text" value={name} onChange={(e) => { setName(e.target.value); setFieldErrors((f) => ({ ...f, name: undefined })); }} required
+            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${fieldErrors.name ? "border-red-400 bg-red-50" : "border-gray-300"}`}
             placeholder="Ej: Parcela Norte" />
+          {fieldErrors.name && <p className="text-red-600 text-xs mt-1">{fieldErrors.name}</p>}
         </div>
 
         {/* Ubicación */}
@@ -162,13 +178,15 @@ export default function NewParcelaPage() {
               )}
             </div>
           )}
+          {fieldErrors.location && <p className="text-red-600 text-xs mt-1">{fieldErrors.location}</p>}
         </div>
 
         <div>
           <label htmlFor="area" className="block text-sm font-medium text-gray-700 mb-1">Superficie (hectáreas)</label>
-          <input id="area" type="number" step="0.01" min="0.01" value={areaHectares} onChange={(e) => setAreaHectares(e.target.value)} required
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none"
+          <input id="area" type="number" step="0.01" min="0.01" value={areaHectares} onChange={(e) => { setAreaHectares(e.target.value); setFieldErrors((f) => ({ ...f, area: undefined })); }} required
+            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none ${fieldErrors.area ? "border-red-400 bg-red-50" : "border-gray-300"}`}
             placeholder="5.5" />
+          {fieldErrors.area && <p className="text-red-600 text-xs mt-1">{fieldErrors.area}</p>}
         </div>
 
         <div className="flex gap-3 pt-2">

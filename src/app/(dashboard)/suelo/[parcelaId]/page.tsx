@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import CropSuggestions from "@/components/soil/CropSuggestions";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface SoilData {
   id: string;
@@ -19,6 +21,8 @@ export default function SueloPage() {
   const [soilData, setSoilData] = useState<SoilData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const toast = useToast();
+  usePageTitle("Datos de suelo");
 
   useEffect(() => {
     fetch(`/api/parcelas/${parcelaId}/soil`)
@@ -47,6 +51,7 @@ export default function SueloPage() {
       const newData = await res.json();
       setSoilData((prev) => [newData, ...prev]);
       setShowForm(false);
+      toast.success("Registro de suelo guardado");
     }
   }
 

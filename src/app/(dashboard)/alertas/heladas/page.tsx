@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Snowflake, Flame, MapPin, CheckCircle, Lock, ArrowRight } from "lucide-react";
 import { usePlan } from "@/hooks/usePlan";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import {
   analyzeClimate, frostLevel, heatLevel, FROST_RISK, HEAT_RISK,
   type DailyPoint, type ClimateAnalysis,
@@ -16,6 +17,7 @@ interface ParcelaAnalysis { parcela: Parcela; analysis: ClimateAnalysis | null; 
 export default function HeladasPage() {
   const router = useRouter();
   const { isPaid, loading: planLoading } = usePlan();
+  usePageTitle("Heladas y calor");
   const [items, setItems] = useState<ParcelaAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
 

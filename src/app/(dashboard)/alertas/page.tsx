@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Thermometer, Droplets, CloudRain, CheckCircle, Bell, BadgeAlert, Snowflake, Flame, Sigma, ArrowRight } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Alert {
   id: string;
@@ -24,6 +25,7 @@ const ALERT_CONFIG: Record<string, { label: string; Icon: React.ElementType; col
 export default function AlertasPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
+  usePageTitle("Alertas");
 
   useEffect(() => {
     fetch("/api/alerts")

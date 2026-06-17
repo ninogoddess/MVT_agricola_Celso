@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BookText, Wallet, ArrowRight } from "lucide-react";
 
+export const metadata = { title: "Negocios · Agrencia" };
+
 export default function NegociosPage() {
   const cards = [
     {

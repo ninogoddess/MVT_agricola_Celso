@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookText, Plus, Trash2, ArrowLeft, Sprout, MapPin } from "lucide-react";
+import { ConfirmModal } from "@/components/ui/Modals";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface FieldLog {
   id: string;
@@ -37,6 +41,9 @@ export default function BitacoraPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const toast = useToast();
+  usePageTitle("Cuaderno de campo");
   const [form, setForm] = useState({
     parcelaId: "", cultivoId: "", logDate: new Date().toISOString().slice(0, 10), category: "labor", title: "", notes: "",
   });
@@ -83,15 +90,20 @@ export default function BitacoraPage() {
       setLogs((prev) => [nuevo, ...prev]);
       setShowForm(false);
       setForm({ parcelaId: "", cultivoId: "", logDate: new Date().toISOString().slice(0, 10), category: "labor", title: "", notes: "" });
+      toast.success("Registro guardado en tu cuaderno");
     } else {
       const d = await res.json();
       setFormError(d.error || "Error al guardar");
     }
   }
 
-  async function remove(id: string) {
+  async function remove() {
+    if (!deleteId) return;
+    const id = deleteId;
+    setLogs((prev) => prev.filter((l) => l.id !== id)); // optimista
+    setDeleteId(null);
     await fetch(`/api/business/logs/${id}`, { method: "DELETE" });
-    setLogs((prev) => prev.filter((l) => l.id !== id));
+    toast.success("Registro eliminado");
   }
 
   const cultivoName = (id: string | null) => {
@@ -181,10 +193,13 @@ export default function BitacoraPage() {
       )}
 
       {logs.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <BookText size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">Aún no hay registros en tu cuaderno de campo</p>
-        </div>
+        <EmptyState
+          icon={BookText}
+          title="Tu cuaderno está vacío"
+          description="Registra tu primera labor (siembra, riego, cosecha…) para llevar un historial ordenado de tu campo."
+          actionLabel="Agregar registro"
+          onAction={() => setShowForm(true)}
+        />
       ) : (
         <div className="space-y-3">
           {logs.map((log) => {
@@ -207,7 +222,7 @@ export default function BitacoraPage() {
                     {log.notes && <p className="text-sm text-gray-500 mt-1.5 whitespace-pre-wrap">{log.notes}</p>}
                   </div>
                 </div>
-                <button onClick={() => remove(log.id)}
+                <button onClick={() => setDeleteId(log.id)}
                   className="px-3 py-2 text-sm bg-red-50 text-red-500 rounded-lg hover:bg-red-100 min-h-[44px] min-w-[44px] flex items-center justify-center flex-shrink-0">
                   <Trash2 size={16} />
                 </button>
@@ -216,6 +231,16 @@ export default function BitacoraPage() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Eliminar registro"
+        message="¿Seguro que quieres eliminar este registro de tu cuaderno de campo? Esta acción no se puede deshacer."
+        confirmLabel="Sí, eliminar"
+        danger
+        onConfirm={remove}
+        onClose={() => setDeleteId(null)}
+      />
     </div>
   );
 }

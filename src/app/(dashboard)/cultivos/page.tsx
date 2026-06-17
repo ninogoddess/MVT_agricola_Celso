@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sprout, MapPin, ArrowRight, Layers } from "lucide-react";
+import { usePageTitle } from "@/hooks/usePageTitle";
+import EmptyState from "@/components/ui/EmptyState";
 
 interface Parcela { id: string; name: string; color: string | null }
 interface Cultivo {
@@ -25,6 +27,7 @@ export default function CultivosOverviewPage() {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [loading, setLoading] = useState(true);
+  usePageTitle("Cultivos");
 
   useEffect(() => {
     fetch("/api/parcelas")
@@ -55,11 +58,13 @@ export default function CultivosOverviewPage() {
       </div>
 
       {parcelas.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-          <Layers size={40} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500 mb-3">No tienes parcelas registradas</p>
-          <Link href="/parcelas/new" className="text-green-600 font-medium hover:underline">Crear primera parcela</Link>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Aún no tienes parcelas"
+          description="Crea una parcela para empezar a registrar y ver tus cultivos."
+          actionLabel="Crear primera parcela"
+          onAction={() => { window.location.href = "/parcelas/new"; }}
+        />
       ) : (
         <div className="space-y-4">
           {parcelas.map((p) => {

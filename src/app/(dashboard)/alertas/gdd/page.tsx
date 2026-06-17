@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Sigma, Snowflake, MapPin, Sprout, Lock, ArrowRight } from "lucide-react";
 import { usePlan } from "@/hooks/usePlan";
+import { usePageTitle } from "@/hooks/usePageTitle";
 import { analyzeClimate, GDD_BASE, CHILL_THRESHOLD, type DailyPoint, type ClimateAnalysis } from "@/lib/utils/climate-analytics";
 
 interface Parcela { id: string; name: string }
@@ -13,6 +14,7 @@ interface ParcelaAnalysis { parcela: Parcela; analysis: ClimateAnalysis | null }
 export default function GddPage() {
   const router = useRouter();
   const { isPaid, loading: planLoading } = usePlan();
+  usePageTitle("Grados-día");
   const [items, setItems] = useState<ParcelaAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
 

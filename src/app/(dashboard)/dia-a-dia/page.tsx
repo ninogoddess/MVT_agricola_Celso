@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Sun, Droplets, Scissors, FlaskConical, CalendarCheck, CheckCircle, Sprout, MapPin, Sparkles } from "lucide-react";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Reminder {
   id: string;
@@ -34,6 +36,8 @@ export default function DiaADiaPage() {
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [cultivos, setCultivos] = useState<Cultivo[]>([]);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  usePageTitle("Día a día");
 
   useEffect(() => {
     Promise.all([
@@ -51,12 +55,13 @@ export default function DiaADiaPage() {
   }, []);
 
   async function complete(id: string) {
+    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r)); // optimista
     await fetch(`/api/reminders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: "completed" }),
     });
-    setReminders((prev) => prev.map((r) => r.id === id ? { ...r, status: "completed" } : r));
+    toast.success("¡Tarea completada!");
   }
 
   const parcelaName = (id: string) => parcelas.find((p) => p.id === id)?.name;

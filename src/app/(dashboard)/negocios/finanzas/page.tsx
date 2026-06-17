@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Wallet, Plus, Trash2, ArrowLeft, TrendingUp, TrendingDown, Scale, Sprout, MapPin } from "lucide-react";
+import { ConfirmModal } from "@/components/ui/Modals";
+import { useToast } from "@/components/ui/Toast";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface Totals { income: number; expense: number; balance: number }
 interface CultivoSummary { cultivoId: string; cultivoName: string; totals: Totals }
@@ -31,6 +34,9 @@ export default function FinanzasPage() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formError, setFormError] = useState("");
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const toast = useToast();
+  usePageTitle("Finanzas");
   const [form, setForm] = useState({
     parcelaId: "", cultivoId: "", type: "expense" as "income" | "expense",
     category: "Semillas", amount: "", description: "", transactionDate: new Date().toISOString().slice(0, 10),
@@ -89,15 +95,20 @@ export default function FinanzasPage() {
       await reload();
       setShowForm(false);
       setForm({ parcelaId: "", cultivoId: "", type: "expense", category: "Semillas", amount: "", description: "", transactionDate: new Date().toISOString().slice(0, 10) });
+      toast.success(form.type === "income" ? "Ingreso registrado" : "Gasto registrado");
     } else {
       const d = await res.json();
       setFormError(d.error || "Error al guardar");
     }
   }
 
-  async function remove(id: string) {
+  async function remove() {
+    if (!deleteId) return;
+    const id = deleteId;
+    setDeleteId(null);
     await fetch(`/api/business/transactions/${id}`, { method: "DELETE" });
     await reload();
+    toast.success("Movimiento eliminado");
   }
 
   const parcelaName = (id: string) => parcelas.find((p) => p.id === id)?.name;
@@ -300,7 +311,7 @@ export default function FinanzasPage() {
                   <span className={`font-semibold ${t.type === "income" ? "text-emerald-700" : "text-red-600"}`}>
                     {t.type === "income" ? "+" : "−"}{clp(Number(t.amount))}
                   </span>
-                  <button onClick={() => remove(t.id)}
+                  <button onClick={() => setDeleteId(t.id)}
                     className="px-2.5 py-2 text-sm bg-red-50 text-red-500 rounded-lg hover:bg-red-100 min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <Trash2 size={15} />
                   </button>
@@ -311,6 +322,16 @@ export default function FinanzasPage() {
         )}
       </div>
       )}
+
+      <ConfirmModal
+        open={deleteId !== null}
+        title="Eliminar movimiento"
+        message="¿Seguro que quieres eliminar este movimiento? Se actualizarán los totales de tu campo."
+        confirmLabel="Sí, eliminar"
+        danger
+        onConfirm={remove}
+        onClose={() => setDeleteId(null)}
+      />
     </div>
   );
 }

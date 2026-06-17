@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { AlertTriangle, Trash2, Smartphone, CreditCard, Sprout, ArrowRight, User, Mail, Building2, Calendar } from "lucide-react";
 import { NotificationStatus, InstallAppStatus } from "@/components/ui/AppBanners";
 import PlanesView from "@/components/planes/PlanesView";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 type PlanId = "free" | "pro" | "organizacion";
 
@@ -22,6 +23,7 @@ interface Account {
 }
 
 export default function AjustesPage() {
+  usePageTitle("Ajustes");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteInput, setDeleteInput] = useState("");
   const [deleting, setDeleting] = useState(false);

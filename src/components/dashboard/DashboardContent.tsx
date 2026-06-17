@@ -6,6 +6,7 @@ import {
   Droplets, Scissors, FlaskConical, Thermometer, CloudRain, MapPin
 } from "lucide-react";
 import { NotificationBanner, InstallAppBanner } from "@/components/ui/AppBanners";
+import { usePageTitle } from "@/hooks/usePageTitle";
 
 interface ClimateSummary { temperature: number; humidity: number; windSpeed: number; precipitationProb: number; }
 
@@ -39,6 +40,7 @@ interface DashboardData {
 
 // ---- Main Dashboard ----
 export default function DashboardContent() {
+  usePageTitle("Resumen rápido");
   const [data, setData] = useState<DashboardData | null>(null);
   const [climate, setClimate] = useState<Record<string, ClimateSummary | null>>({});
   const [loading, setLoading] = useState(true);
