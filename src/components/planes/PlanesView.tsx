@@ -99,6 +99,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
   const [confirmPlan, setConfirmPlan] = useState<Plan | null>(null);
   const [mpEmail, setMpEmail] = useState("");
   const [showDowngrade, setShowDowngrade] = useState(false);
+  const [loadingMode, setLoadingMode] = useState<"oneshot" | "subscription" | null>(null);
 
   // Etiqueta dinámica del botón según el plan actual del usuario.
   const getCtaLabel = (plan: Plan) => {
@@ -110,15 +111,16 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
       : `Cambiar a ${plan.name}`;
   };
 
-  const handleUpgrade = async (planId: string) => {
+  const handleUpgrade = async (planId: string, mode: "oneshot" | "subscription") => {
     try {
       setLoadingPlan(planId);
+      setLoadingMode(mode);
       setError(null);
 
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, payerEmail: mpEmail.trim() || undefined })
+        body: JSON.stringify({ planId, mode, payerEmail: mpEmail.trim() || undefined })
       });
 
       const data = await res.json();
@@ -131,6 +133,7 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
     } catch (err: any) {
       setError(err.message);
       setLoadingPlan(null);
+      setLoadingMode(null);
       setConfirmPlan(null);
     }
   };
@@ -331,14 +334,31 @@ export default function PlanesView({ currentPlan = "free", onClose, modal = fals
                 <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 mb-4">{error}</div>
               )}
 
-              <div className="flex gap-2">
-                <button onClick={() => setConfirmPlan(null)} disabled={loadingPlan !== null}
-                  className="px-4 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 min-h-[48px] disabled:opacity-50">
-                  Cancelar
+              {/* Formas de pago */}
+              <div className="space-y-2.5">
+                <button onClick={() => handleUpgrade(confirmPlan.id, "oneshot")} disabled={loadingPlan !== null}
+                  className="w-full py-3.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[52px] flex flex-col items-center justify-center gap-0.5 disabled:opacity-60">
+                  {loadingPlan !== null && loadingMode === "oneshot"
+                    ? <Loader2 size={18} className="animate-spin" />
+                    : <>
+                        <span className="flex items-center gap-2">Pagar el mes <ArrowRight size={16} /></span>
+                        <span className="text-[11px] font-normal text-green-100">Tarjeta de débito, CuentaRUT o crédito</span>
+                      </>}
                 </button>
-                <button onClick={() => handleUpgrade(confirmPlan.id)} disabled={loadingPlan !== null}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 min-h-[48px] flex items-center justify-center gap-2 disabled:opacity-60">
-                  {loadingPlan !== null ? <Loader2 size={18} className="animate-spin" /> : <>Continuar al pago <ArrowRight size={16} /></>}
+
+                <button onClick={() => handleUpgrade(confirmPlan.id, "subscription")} disabled={loadingPlan !== null}
+                  className="w-full py-3 bg-white border-2 border-green-600 text-green-700 rounded-xl font-semibold hover:bg-green-50 min-h-[48px] flex flex-col items-center justify-center gap-0.5 disabled:opacity-60">
+                  {loadingPlan !== null && loadingMode === "subscription"
+                    ? <Loader2 size={18} className="animate-spin" />
+                    : <>
+                        <span>Suscripción automática</span>
+                        <span className="text-[11px] font-normal text-green-600/80">Se renueva sola cada mes · solo tarjeta de crédito</span>
+                      </>}
+                </button>
+
+                <button onClick={() => setConfirmPlan(null)} disabled={loadingPlan !== null}
+                  className="w-full py-2.5 text-gray-500 hover:text-gray-700 text-sm min-h-[44px] disabled:opacity-50">
+                  Cancelar
                 </button>
               </div>
             </div>

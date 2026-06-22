@@ -8,7 +8,7 @@ export class SubscriptionService {
     const { data, error } = await this.supabase
       .from('subscriptions')
       .select(`
-        id, status, start_date, end_date,
+        id, status, start_date, end_date, payment_type, next_billing_date,
         plan:plans ( id, name, max_plots, max_crops, max_reminders, allow_workers )
       `)
       .eq('tenant_id', this.tenantId)
@@ -17,15 +17,29 @@ export class SubscriptionService {
       .limit(1)
       .single();
 
-    if (error || !data) {
-      // Si por alguna razón no hay suscripción, asumimos free
+    const freePlanFallback = async () => {
       const { data: freePlan } = await this.supabase.from('plans').select('*').eq('id', 'free').single();
       return { plan: freePlan };
+    };
+
+    if (error || !data) {
+      // Si por alguna razón no hay suscripción, asumimos free
+      return freePlanFallback();
     }
 
     // Aplanar el resultado, ya que Supabase puede devolver plan como un arreglo de un elemento o un objeto dependiendo de RLS/relación.
-    // Usualmente con un belongsTo es un objeto.
     const plan = Array.isArray(data.plan) ? data.plan[0] : data.plan;
+
+    // Pago mensual vencido: si es 'oneshot' y pasó la fecha de vencimiento,
+    // el plan vuelve a Gratis hasta que el usuario pague de nuevo.
+    if (
+      data.payment_type === 'oneshot' &&
+      data.next_billing_date &&
+      new Date(data.next_billing_date).getTime() < Date.now() &&
+      (plan as any)?.id !== 'free'
+    ) {
+      return freePlanFallback();
+    }
 
     return { ...data, plan };
   }

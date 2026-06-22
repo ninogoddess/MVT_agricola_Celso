@@ -21,20 +21,28 @@ export default function PaymentConfirm() {
 
     const preapprovalId =
       searchParams.get("preapproval_id") || searchParams.get("preapprovalId");
+    const paymentId =
+      searchParams.get("payment_id") || searchParams.get("collection_id");
     const cameFromPayment =
       preapprovalId !== null ||
+      paymentId !== null ||
       searchParams.get("payment") === "processing" ||
-      searchParams.get("status") === "authorized";
+      searchParams.get("status") === "authorized" ||
+      searchParams.get("status") === "approved";
 
     // Mostramos "verificando" solo si claramente venimos del pago.
     if (cameFromPayment) setState("checking");
 
     (async () => {
       try {
+        const payload: Record<string, string> = {};
+        if (preapprovalId) payload.preapprovalId = preapprovalId;
+        if (paymentId) payload.paymentId = paymentId;
+
         const res = await fetch("/api/checkout/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(preapprovalId ? { preapprovalId } : {}),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
 

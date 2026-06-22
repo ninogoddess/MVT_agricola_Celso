@@ -1,4 +1,4 @@
-import { MercadoPagoConfig, PreApproval, Payment } from 'mercadopago';
+import { MercadoPagoConfig, PreApproval, Payment, Preference } from 'mercadopago';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 const client = new MercadoPagoConfig({
@@ -75,6 +75,67 @@ export class PaymentService {
     const preApproval = new PreApproval(client);
     const result = await preApproval.get({ id: preapprovalId });
     return result;
+  }
+
+  /**
+   * Pago mensual único vía Checkout Pro (Preference).
+   * Acepta TODOS los medios: débito, CuentaRUT/RedCompra, crédito y prepago.
+   * No es recurrente: activa el plan por un período y el usuario vuelve a pagar al vencer.
+   */
+  async createOneTimeCheckout(tenantId: string, planId: string, priceClp: number, planName: string, payerEmail: string) {
+    const preference = new Preference(client);
+    const siteUrl = this.getSiteUrl();
+    const reference = JSON.stringify({ tenantId, planId, type: 'oneshot' });
+
+    let result;
+    try {
+      result = await preference.create({
+        body: {
+          items: [
+            {
+              id: planId,
+              title: `Plan ${planName} - 1 mes`,
+              quantity: 1,
+              unit_price: priceClp,
+              currency_id: 'CLP',
+            },
+          ],
+          external_reference: reference,
+          payer: { email: payerEmail },
+          back_urls: {
+            success: `${siteUrl}/dashboard?payment=processing`,
+            pending: `${siteUrl}/dashboard?payment=processing`,
+            failure: `${siteUrl}/planes?payment=failure`,
+          },
+          auto_return: 'approved',
+          statement_descriptor: 'AGRENCIA',
+          metadata: { tenant_id: tenantId, plan_id: planId },
+        },
+      });
+    } catch (err: any) {
+      const mpCause = err?.cause ?? err?.error ?? err?.response?.data ?? null;
+      await this.logEvent(tenantId, 'mp_error', {
+        flow: 'oneshot',
+        plan_id: planId,
+        price: priceClp,
+        payer_email: payerEmail,
+        site_url: siteUrl,
+        message: err?.message ?? null,
+        status: err?.status ?? err?.statusCode ?? null,
+        cause: mpCause,
+      });
+      throw err;
+    }
+
+    await this.logEvent(tenantId, 'initiated', {
+      preference_id: result.id,
+      plan_id: planId,
+      price: priceClp,
+      payer_email: payerEmail,
+      flow: 'oneshot',
+    });
+
+    return { initPoint: result.init_point };
   }
 
   async verifyPayment(paymentId: string) {

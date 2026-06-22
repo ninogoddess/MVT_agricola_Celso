@@ -20,14 +20,73 @@ export async function POST(request: Request) {
   return withTenantContext(async (ctx) => {
     try {
       let bodyPreapprovalId: string | undefined;
+      let bodyPaymentId: string | undefined;
       try {
         const body = await request.json();
         bodyPreapprovalId = body?.preapprovalId || body?.preapproval_id;
+        bodyPaymentId = body?.paymentId || body?.payment_id;
       } catch {
         // sin body, está bien
       }
 
       const serviceRole = createSupabaseServiceRoleClient();
+      const paymentService = new PaymentService(serviceRole);
+
+      // ── Flujo de PAGO MENSUAL (Checkout Pro / pago único) ──
+      if (bodyPaymentId) {
+        let mpPayment;
+        try {
+          mpPayment = await paymentService.verifyPayment(bodyPaymentId);
+        } catch {
+          return NextResponse.json({ updated: false, reason: 'verify_failed' });
+        }
+
+        let refTenantId: string | undefined;
+        let planId: string | undefined;
+        try {
+          const ref = JSON.parse(mpPayment.external_reference || '{}');
+          refTenantId = ref.tenantId;
+          planId = ref.planId;
+        } catch {
+          // referencia inválida
+        }
+
+        if (!refTenantId || refTenantId !== ctx.tenantId) {
+          return NextResponse.json({ updated: false, reason: 'tenant_mismatch' }, { status: 403 });
+        }
+
+        if (mpPayment.status === 'approved' && planId) {
+          const nextBilling = new Date();
+          nextBilling.setDate(nextBilling.getDate() + 30);
+
+          const { data: updated } = await serviceRole.from('subscriptions').update({
+            plan_id: planId,
+            status: 'active',
+            payment_type: 'oneshot',
+            start_date: new Date().toISOString(),
+            next_billing_date: nextBilling.toISOString(),
+          }).eq('tenant_id', ctx.tenantId).select('id');
+
+          if (!updated || updated.length === 0) {
+            await serviceRole.from('subscriptions').insert({
+              tenant_id: ctx.tenantId,
+              plan_id: planId,
+              status: 'active',
+              payment_type: 'oneshot',
+              start_date: new Date().toISOString(),
+              next_billing_date: nextBilling.toISOString(),
+            });
+          }
+
+          await paymentService.logEvent(ctx.tenantId, 'payment_processed', {
+            paymentId: bodyPaymentId, planId, source: 'confirm', validUntil: nextBilling.toISOString(),
+          });
+
+          return NextResponse.json({ updated: true, plan: planId, status: mpPayment.status });
+        }
+
+        return NextResponse.json({ updated: false, status: mpPayment.status });
+      }
 
       // Leer la suscripción actual del tenant
       const { data: sub } = await serviceRole
@@ -51,7 +110,6 @@ export async function POST(request: Request) {
       }
 
       // Verificar con Mercado Pago
-      const paymentService = new PaymentService(serviceRole);
       const mp = await paymentService.verifyPreApproval(preapprovalId);
 
       const status = mp.status;

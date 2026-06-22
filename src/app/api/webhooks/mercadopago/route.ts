@@ -147,15 +147,30 @@ export async function POST(request: Request) {
       }
 
       if (status === 'approved') {
-        // En un esquema de PreApproval, el "payment" aprobado confirma el cobro del mes.
-        // Solo actualizamos la fecha de inicio/estado si no tuviéramos un preapproval.
-        // Lo dejamos como log por seguridad o para cobros únicos.
-        await supabase.from('subscriptions').update({
+        // Pago mensual aprobado (Checkout Pro): activamos el plan por 30 días.
+        const nextBilling = new Date();
+        nextBilling.setDate(nextBilling.getDate() + 30);
+
+        const { data: updated } = await supabase.from('subscriptions').update({
           plan_id: planId,
           status: 'active',
-        }).eq('tenant_id', tenantId);
-          
-        await paymentService.logEvent(tenantId, 'payment_processed', { paymentId, planId });
+          payment_type: 'oneshot',
+          start_date: new Date().toISOString(),
+          next_billing_date: nextBilling.toISOString(),
+        }).eq('tenant_id', tenantId).select('id');
+
+        if (!updated || updated.length === 0) {
+          await supabase.from('subscriptions').insert({
+            tenant_id: tenantId,
+            plan_id: planId,
+            status: 'active',
+            payment_type: 'oneshot',
+            start_date: new Date().toISOString(),
+            next_billing_date: nextBilling.toISOString(),
+          });
+        }
+
+        await paymentService.logEvent(tenantId, 'payment_processed', { paymentId, planId, validUntil: nextBilling.toISOString() });
       } else if (status === 'rejected' || status === 'cancelled') {
         await paymentService.logEvent(tenantId, 'rejected', { paymentId, planId, mpStatus: status });
       }
