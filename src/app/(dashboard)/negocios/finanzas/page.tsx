@@ -6,6 +6,7 @@ import { Wallet, Plus, Trash2, ArrowLeft, TrendingUp, TrendingDown, Scale, Sprou
 import { ConfirmModal } from "@/components/ui/Modals";
 import { useToast } from "@/components/ui/Toast";
 import { usePageTitle } from "@/hooks/usePageTitle";
+import AgroIndicators from "@/components/business/AgroIndicators";
 
 interface Totals { income: number; expense: number; balance: number }
 interface CultivoSummary { cultivoId: string; cultivoName: string; totals: Totals }
@@ -17,7 +18,7 @@ interface Transaction {
   type: "income" | "expense"; category: string; amount: string;
   description: string | null; transaction_date: string;
 }
-interface Parcela { id: string; name: string }
+interface Parcela { id: string; name: string; area_hectares?: string | number }
 interface Cultivo { id: string; name: string | null; species: string; parcela_id: string; status?: string }
 
 const clp = (n: number) =>
@@ -122,6 +123,7 @@ export default function FinanzasPage() {
 
   const g = summary?.general ?? { income: 0, expense: 0, balance: 0 };
   const hasData = transactions.length > 0;
+  const totalHectares = parcelas.reduce((s, p) => s + Number(p.area_hectares ?? 0), 0);
 
   return (
     <div className="space-y-4 animate-fade-in-up">
@@ -145,6 +147,9 @@ export default function FinanzasPage() {
         a una parcela y, si quieres, a un cultivo. El sistema calcula automáticamente la rentabilidad por cultivo,
         por parcela y el total de tu campo, para que sepas qué te conviene producir.
       </div>
+
+      {/* Indicadores agrofinancieros */}
+      <AgroIndicators income={g.income} expense={g.expense} totalHectares={totalHectares} />
 
       {/* Resumen general */}
       {hasData && (
